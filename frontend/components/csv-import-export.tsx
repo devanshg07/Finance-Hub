@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Download, Upload, FileText } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
 interface CSVImportExportProps {
   onImportSuccess: () => void
@@ -16,6 +17,41 @@ export function CSVImportExport({ onImportSuccess }: CSVImportExportProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [importMessage, setImportMessage] = useState("")
 
+  const handleImport = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/tasks/import', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "Success",
+          description: `Imported ${data.count} transactions successfully!`,
+        })
+        // Refresh the transactions list
+        window.location.reload()
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to import transactions",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to import transactions. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -23,35 +59,20 @@ export function CSVImportExport({ onImportSuccess }: CSVImportExportProps) {
     setIsImporting(true)
     setImportMessage("")
 
-    const formData = new FormData()
-    formData.append('file', file)
-
     try {
-      const response = await fetch('http://localhost:5000/api/tasks/import', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setImportMessage(`Successfully imported ${data.count} transactions!`)
-        onImportSuccess()
-      } else {
-        setImportMessage(`Import failed: ${data.error}`)
-      }
+      await handleImport(file)
+      setImportMessage("Import successful!")
+      onImportSuccess()
     } catch (error) {
-      setImportMessage("Import failed: Network error")
+      setImportMessage("Import failed")
     } finally {
       setIsImporting(false)
     }
   }
 
   const handleExport = async () => {
-    setIsExporting(true)
-
     try {
-      const response = await fetch('http://localhost:5000/api/tasks/export')
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/tasks/export')
       
       if (response.ok) {
         const blob = await response.blob()
@@ -63,13 +84,24 @@ export function CSVImportExport({ onImportSuccess }: CSVImportExportProps) {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
+        
+        toast({
+          title: "Success",
+          description: "Transactions exported successfully!",
+        })
       } else {
-        alert('Export failed')
+        toast({
+          title: "Error",
+          description: "Failed to export transactions",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      alert('Export failed: Network error')
-    } finally {
-      setIsExporting(false)
+      toast({
+        title: "Error",
+        description: "Failed to export transactions. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 

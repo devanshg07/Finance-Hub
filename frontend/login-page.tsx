@@ -41,82 +41,75 @@ export default function Component() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setMessage({ text: '', type: '' })
 
     try {
-      if (isLogin) {
-        // Login API call
-        const response = await fetch('http://localhost:5000/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
-        })
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email: formData.email, 
+          password: formData.password 
+        }),
+      })
 
-        const data = await response.json()
+      const data = await response.json()
 
-        if (response.ok) {
-          console.log('Login successful:', data)
-          // Store user data in localStorage or state management
-          localStorage.setItem('user', JSON.stringify(data.user))
-          setMessage({ text: 'Login successful!', type: 'success' })
-          // Redirect to dashboard after successful login
-          setTimeout(() => {
-            window.location.href = '/dashboard'
-          }, 1000)
-        } else {
-          setMessage({ text: data.error || 'Login failed', type: 'error' })
-        }
+      if (response.ok) {
+        localStorage.setItem('user', JSON.stringify(data.user))
+        window.location.href = '/dashboard'
       } else {
-        // Register API call
-        if (formData.password !== formData.confirmPassword) {
-          setMessage({ text: 'Passwords do not match', type: 'error' })
-          setIsLoading(false)
-          return
-        }
-
-        const response = await fetch('http://localhost:5000/api/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            password: formData.password,
-          }),
-        })
-
-        const data = await response.json()
-
-        if (response.ok) {
-          console.log('Registration successful:', data)
-          setMessage({ text: 'Registration successful! Please login.', type: 'success' })
-          setIsLogin(true)
-          setFormData({
-            firstName: "",
-            lastName: "",
-            email: "",
-            password: "",
-            confirmPassword: "",
-            agreeToTerms: false,
-          })
-        } else {
-          setMessage({ text: data.error || 'Registration failed', type: 'error' })
-        }
+        setMessage({ text: data.error || 'Login failed', type: 'error' })
       }
     } catch (error) {
-      console.error('API Error:', error)
       setMessage({ text: 'Network error. Please try again.', type: 'error' })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setMessage({ text: '', type: '' })
+
+    if (formData.password !== formData.confirmPassword) {
+      setMessage({ text: 'Passwords do not match', type: 'error' })
+      setIsLoading(false)
+      return
     }
 
-    setIsLoading(false)
+    try {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username: `${formData.firstName} ${formData.lastName}`, 
+          email: formData.email, 
+          password: formData.password 
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        localStorage.setItem('user', JSON.stringify(data.user))
+        window.location.href = '/dashboard'
+      } else {
+        setMessage({ text: data.error || 'Registration failed', type: 'error' })
+      }
+    } catch (error) {
+      setMessage({ text: 'Network error. Please try again.', type: 'error' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const toggleMode = () => {
@@ -223,7 +216,7 @@ export default function Component() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
               {/* Message Display */}
               {message.text && (
                 <div
