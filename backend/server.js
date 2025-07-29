@@ -1,14 +1,45 @@
 const express = require('express');
-const cors = require('cors');
+const dotenv = require('dotenv');
+const bodyParser = require('body-parser');
+const path = require('path');
+const multer = require('multer');
+const csv = require('csv-parser');
+const fs = require('fs');
+const createCsvWriter = require('csv-writer').createObjectCsvStringifier;
 const bcrypt = require('bcryptjs');
 const sqlite3 = require('sqlite3').verbose();
+const { expenseDescriptions, incomeDescriptions } = require('./categories');
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
+
+// Enable CORS for frontend
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Database setup
 const db = new sqlite3.Database('./database.sqlite', (err) => {
@@ -20,7 +51,6 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
   }
 });
 
-// Initialize database tables
 function initDatabase() {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -37,11 +67,30 @@ function initDatabase() {
       console.log('Users table ready');
     }
   });
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category TEXT NOT NULL,
+      description TEXT NOT NULL,
+      amount REAL NOT NULL,
+      date TEXT NOT NULL,
+      user TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Error creating tasks table:', err);
+    } else {
+      console.log('Tasks table ready');
+    }
+  });
 }
 
-// API Routes
+// Set up multer for file uploads
+const upload = multer({ dest: 'uploads/' });
 
-// Register new user
+// Authentication Routes
 app.post('/api/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -50,10 +99,8 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into database
     db.run(
       'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
       [username, email, hashedPassword],
@@ -62,21 +109,21 @@ app.post('/api/register', async (req, res) => {
           if (err.message.includes('UNIQUE constraint failed')) {
             return res.status(400).json({ error: 'Username or email already exists' });
           }
-          return res.status(500).json({ error: 'Error creating user' });
+          return res.status(500).json({ error: 'Registration failed' });
         }
 
         res.status(201).json({
-          message: 'User created successfully',
+          message: 'User registered successfully',
           user: { id: this.lastID, username, email }
         });
       }
     );
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 
-// Login user
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -84,53 +131,215 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  // Find user by email
   db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
     if (err) {
-      return res.status(500).json({ error: 'Database error' });
+      return res.status(500).json({ error: 'Login failed' });
     }
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check password
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    try {
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
 
-    res.json({
-      message: 'Login successful',
-      user: { id: user.id, username: user.username, email: user.email }
-    });
+      res.json({
+        message: 'Login successful',
+        user: { id: user.id, username: user.username, email: user.email }
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Login failed' });
+    }
   });
 });
 
-// Get user profile
-app.get('/api/profile/:userId', (req, res) => {
-  const { userId } = req.params;
+// Endpoint to get allowed categories/descriptions
+app.get('/api/categories', (req, res) => {
+  res.json({
+    expenseDescriptions,
+    incomeDescriptions
+  });
+});
+
+// Create a new task
+app.post('/api/tasks', (req, res) => {
+  const { category, description, amount, date, user } = req.body;
   
-  db.get('SELECT id, username, email, created_at FROM users WHERE id = ?', 
-    [userId], (err, user) => {
+  if (!description || description.trim() === '') {
+    return res.status(400).json({ error: 'Description is required' });
+  }
+
+  db.run(
+    'INSERT INTO tasks (category, description, amount, date, user) VALUES (?, ?, ?, ?, ?)',
+    [category, description, amount, date, user],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to create task' });
+      }
+      
+      const task = { 
+        id: this.lastID, 
+        category, 
+        description, 
+        amount, 
+        date, 
+        user 
+      };
+      res.status(201).json(task);
+    }
+  );
+});
+
+// Import tasks from CSV
+app.post('/api/tasks/import', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const results = [];
+  fs.createReadStream(req.file.path)
+    .pipe(csv())
+    .on('data', (data) => {
+      // Validate description
+      if (
+        (data.category === 'expense' && !expenseDescriptions.includes(data.description)) ||
+        (data.category === 'income' && !incomeDescriptions.includes(data.description))
+      ) {
+        // skip invalid
+        return;
+      }
+      results.push({
+        category: data.category,
+        description: data.description,
+        amount: Number(data.amount),
+        date: data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        user: data.user
+      });
+    })
+    .on('end', () => {
+      // Insert all results into database
+      const stmt = db.prepare('INSERT INTO tasks (category, description, amount, date, user) VALUES (?, ?, ?, ?, ?)');
+      results.forEach(task => {
+        stmt.run([task.category, task.description, task.amount, task.date, task.user]);
+      });
+      stmt.finalize();
+      
+      fs.unlinkSync(req.file.path); // Clean up uploaded file
+      res.json({ message: 'Tasks imported', count: results.length });
+    })
+    .on('error', (err) => {
+      res.status(500).json({ error: err.message });
+    });
+});
+
+// Get all tasks
+app.get('/api/tasks', (req, res) => {
+  db.all('SELECT * FROM tasks ORDER BY date DESC', [], (err, tasks) => {
     if (err) {
-      return res.status(500).json({ error: 'Database error' });
+      return res.status(500).json({ error: 'Failed to fetch tasks' });
     }
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json({ user });
+    res.json(tasks);
   });
 });
 
-// Test route
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend API is running!' });
+// Export tasks as CSV
+app.get('/api/tasks/export', (req, res) => {
+  try {
+    db.all('SELECT * FROM tasks ORDER BY date DESC', [], (err, tasks) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to fetch tasks' });
+      }
+
+      const csvStringifier = createCsvWriter({
+        header: [
+          { id: 'category', title: 'category' },
+          { id: 'description', title: 'description' },
+          { id: 'amount', title: 'amount' },
+          { id: 'date', title: 'date' },
+          { id: 'user', title: 'user' }
+        ]
+      });
+      
+      const records = tasks.map(task => ({
+        category: task.category,
+        description: task.description,
+        amount: task.amount,
+        date: task.date,
+        user: task.user
+      }));
+      
+      const csv = csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records);
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="tasks.csv"');
+      res.send(csv);
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get a single task by ID
+app.get('/api/tasks/:id', (req, res) => {
+  db.get('SELECT * FROM tasks WHERE id = ?', [req.params.id], (err, task) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to fetch task' });
+    }
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json(task);
+  });
+});
+
+// Update a task by ID
+app.put('/api/tasks/:id', (req, res) => {
+  const { category, description, amount, date, user } = req.body;
+  
+  // Validate description
+  if (category === 'expense' && !expenseDescriptions.includes(description)) {
+    return res.status(400).json({ error: 'Invalid expense description' });
+  }
+  if (category === 'income' && !incomeDescriptions.includes(description)) {
+    return res.status(400).json({ error: 'Invalid income description' });
+  }
+
+  db.run(
+    'UPDATE tasks SET category = ?, description = ?, amount = ?, date = ?, user = ? WHERE id = ?',
+    [category, description, amount, date, user, req.params.id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to update task' });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      res.json({ message: 'Task updated successfully' });
+    }
+  );
+});
+
+// Delete a task by ID
+app.delete('/api/tasks/:id', (req, res) => {
+  db.run('DELETE FROM tasks WHERE id = ?', [req.params.id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to delete task' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json({ message: 'Task deleted successfully' });
+  });
+});
+
+// Basic route
+app.get('/', (req, res) => {
+  res.send('Finance Tracker API is running');
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Backend API running on http://localhost:${PORT}`);
-});
-
-module.exports = app; 
+  console.log(`Server running on port ${PORT}`);
+}); 

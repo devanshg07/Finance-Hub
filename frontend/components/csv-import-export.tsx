@@ -1,0 +1,137 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Download, Upload, FileText } from "lucide-react"
+
+interface CSVImportExportProps {
+  onImportSuccess: () => void
+}
+
+export function CSVImportExport({ onImportSuccess }: CSVImportExportProps) {
+  const [isImporting, setIsImporting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [importMessage, setImportMessage] = useState("")
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    setImportMessage("")
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('http://localhost:5000/api/tasks/import', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setImportMessage(`Successfully imported ${data.count} transactions!`)
+        onImportSuccess()
+      } else {
+        setImportMessage(`Import failed: ${data.error}`)
+      }
+    } catch (error) {
+      setImportMessage("Import failed: Network error")
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
+  const handleExport = async () => {
+    setIsExporting(true)
+
+    try {
+      const response = await fetch('http://localhost:5000/api/tasks/export')
+      
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'transactions.csv'
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      } else {
+        alert('Export failed')
+      }
+    } catch (error) {
+      alert('Export failed: Network error')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="w-5 h-5" />
+          Import / Export Data
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Import Section */}
+        <div className="space-y-2">
+          <Label htmlFor="csv-import">Import from CSV</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="csv-import"
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              disabled={isImporting}
+            />
+            <Button variant="outline" size="sm" disabled={isImporting}>
+              <Upload className="w-4 h-4 mr-2" />
+              {isImporting ? "Importing..." : "Import"}
+            </Button>
+          </div>
+          {importMessage && (
+            <p className={`text-sm ${importMessage.includes('Successfully') ? 'text-green-600' : 'text-red-600'}`}>
+              {importMessage}
+            </p>
+          )}
+        </div>
+
+        {/* Export Section */}
+        <div className="space-y-2">
+          <Label>Export to CSV</Label>
+          <Button 
+            variant="outline" 
+            onClick={handleExport} 
+            disabled={isExporting}
+            className="w-full"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {isExporting ? "Exporting..." : "Export All Transactions"}
+          </Button>
+        </div>
+
+        {/* CSV Format Info */}
+        <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+          <p className="font-medium mb-2">CSV Format:</p>
+          <p>Your CSV should have these columns:</p>
+          <ul className="list-disc list-inside mt-1 space-y-1">
+            <li><code>category</code> - "expense" or "income"</li>
+            <li><code>description</code> - Transaction description</li>
+            <li><code>amount</code> - Transaction amount</li>
+            <li><code>date</code> - Date (YYYY-MM-DD format)</li>
+            <li><code>user</code> - User identifier (optional)</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  )
+} 
