@@ -66,8 +66,8 @@ export default function FinancialTracker() {
           id: task.id,
           type: (task.amount < 0 ? 'expense' : 'income') as "income" | "expense",
           amount: Math.abs(task.amount),
-          category: task.description,
-          description: task.description,
+          category: task.category, // Use the actual category field
+          description: task.description || '', // Use the actual description field
           date: task.date
         }))
         setTransactions(transformedData)
@@ -98,7 +98,7 @@ export default function FinancialTracker() {
         },
         body: JSON.stringify({
           category: transaction.category,
-          description: transaction.description,
+          description: transaction.description || '', // Allow empty description
           amount: transaction.amount,
           date: transaction.date,
           user: 'default'
@@ -111,8 +111,8 @@ export default function FinancialTracker() {
           id: newTask.id,
           type: transaction.amount < 0 ? 'expense' : 'income',
           amount: Math.abs(transaction.amount),
-          category: transaction.description,
-          description: transaction.description,
+          category: transaction.category, // Use the actual category
+          description: transaction.description || '', // Use the actual description
           date: transaction.date
         }
         setTransactions(prev => [newTransaction, ...prev])

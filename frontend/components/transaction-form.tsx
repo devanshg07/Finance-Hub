@@ -20,9 +20,15 @@ interface TransactionFormProps {
   onCancel?: () => void
 }
 
-interface Categories {
-  expenseDescriptions: string[]
-  incomeDescriptions: string[]
+interface Category {
+  id: string
+  name: string
+  color: string
+}
+
+interface UserCategories {
+  incomeCategories: Category[]
+  expenseCategories: Category[]
 }
 
 export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormProps) {
@@ -34,27 +40,79 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
     date: new Date().toISOString().split('T')[0]
   })
 
-  const [categories, setCategories] = useState<Categories>({
-    expenseDescriptions: [],
-    incomeDescriptions: []
+  const [userCategories, setUserCategories] = useState<UserCategories>({
+    incomeCategories: [],
+    expenseCategories: []
   })
 
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    // Fetch categories from backend
-    fetch('http://localhost:5000/api/categories')
-      .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(err => console.error('Failed to fetch categories:', err))
+    loadUserCategories()
   }, [])
+
+  const loadUserCategories = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      if (!user.id) {
+        // If no user logged in, use default categories
+        const response = await fetch('http://localhost:5000/api/categories')
+        const data = await response.json()
+        setUserCategories({
+          incomeCategories: data.incomeDescriptions.map((name: string, index: number) => ({
+            id: `default-income-${index}`,
+            name,
+            color: '#22c55e'
+          })),
+          expenseCategories: data.expenseDescriptions.map((name: string, index: number) => ({
+            id: `default-expense-${index}`,
+            name,
+            color: '#ef4444'
+          }))
+        })
+        return
+      }
+
+      const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setUserCategories({
+          incomeCategories: data.incomeCategories || [],
+          expenseCategories: data.expenseCategories || []
+        })
+      } else {
+        // Fallback to default categories if no user categories found
+        const defaultResponse = await fetch('http://localhost:5000/api/categories')
+        const defaultData = await defaultResponse.json()
+        setUserCategories({
+          incomeCategories: defaultData.incomeDescriptions.map((name: string, index: number) => ({
+            id: `default-income-${index}`,
+            name,
+            color: '#22c55e'
+          })),
+          expenseCategories: defaultData.expenseDescriptions.map((name: string, index: number) => ({
+            id: `default-expense-${index}`,
+            name,
+            color: '#ef4444'
+          }))
+        })
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error)
+      // Use empty arrays on error
+      setUserCategories({
+        incomeCategories: [],
+        expenseCategories: []
+      })
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     
-    if (!formData.category || !formData.description || !formData.amount || !formData.date) {
-      alert("Please fill in all fields")
+    if (!formData.category || !formData.amount || !formData.date) {
+      alert("Please fill in all required fields")
       setIsLoading(false)
       return
     }
@@ -71,7 +129,7 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
 
     onAddTransaction({
       category: formData.category,
-      description: formData.description,
+      description: formData.description || '', // Allow empty description
       amount: finalAmount,
       date: formData.date
     })
@@ -88,8 +146,8 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
   }
 
   const currentCategories = formData.type === 'expense' 
-    ? categories.expenseDescriptions 
-    : categories.incomeDescriptions
+    ? userCategories.expenseCategories 
+    : userCategories.incomeCategories
 
   return (
     <Card className="w-full max-w-md">
@@ -98,27 +156,26 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
           <Plus className="w-5 h-5" />
           Add Transaction
         </CardTitle>
-        <p className="text-sm text-gray-600">Record a new income or expense transaction</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Transaction Type */}
           <div className="space-y-2">
             <Label>Transaction Type</Label>
-            <RadioGroup 
-              value={formData.type} 
+            <RadioGroup
+              value={formData.type}
               onValueChange={(value) => {
                 setFormData({ ...formData, type: value, category: "" })
               }}
-              className="flex gap-4"
+              className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="income" id="income" />
-                <Label htmlFor="income" className="text-green-600 font-medium">Income</Label>
+                <Label htmlFor="income" className="text-green-600">Income</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="expense" id="expense" />
-                <Label htmlFor="expense" className="text-red-600 font-medium">Expense</Label>
+                <Label htmlFor="expense" className="text-red-600">Expense</Label>
               </div>
             </RadioGroup>
           </div>
@@ -133,23 +190,27 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
               placeholder="0.00"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              required
             />
           </div>
 
           {/* Category */}
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select 
-              value={formData.category} 
-              onValueChange={(value) => setFormData({ ...formData, category: value })}
-            >
+            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
                 {currentCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                  <SelectItem key={category.id} value={category.name}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -161,10 +222,9 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              placeholder="Enter transaction description"
+              placeholder="Enter transaction description (optional)"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
             />
           </div>
 
@@ -172,23 +232,25 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
           <div className="space-y-2">
             <Label htmlFor="date">Date</Label>
             <div className="relative">
+              <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="date"
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="pl-10"
+                required
               />
-              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1" disabled={isLoading}>
+          {/* Buttons */}
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" disabled={isLoading} className="flex-1">
               {isLoading ? "Adding..." : "Add Transaction"}
             </Button>
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+              <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
             )}

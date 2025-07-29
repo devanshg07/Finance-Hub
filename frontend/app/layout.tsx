@@ -4,9 +4,16 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'FinanceHub - Track Your Finances',
+  description: 'Manage your income and expenses with our powerful financial tracking tool',
+  generator: 'FinanceHub',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+    ],
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
@@ -17,6 +24,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/favicon.jpeg?v=3" type="image/jpeg" />
+        <link rel="alternate icon" href="/favicon.jpg?v=3" type="image/jpeg" />
+        <link rel="shortcut icon" href="/favicon.jpg?v=3" type="image/jpeg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>{`
 html {
   font-family: ${GeistSans.style.fontFamily};

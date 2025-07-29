@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { User, LogOut, Settings, Palette, Tag, Shield, TrendingUp } from "lucide-react"
+import { User, LogOut, Settings, Palette, Tag, Shield, Zap } from "lucide-react"
 
 interface NavBarProps {
   isDarkMode?: boolean
@@ -20,8 +20,12 @@ export function NavBar({ isDarkMode = false }: NavBarProps) {
         {/* Logo and Slogan */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 flex items-center justify-center">
-              <TrendingUp className={`w-5 h-5 transition-colors duration-200 ${isDarkMode ? 'text-black' : 'text-gray-600'}`} />
+            <div className="w-8 h-8 flex items-center justify-center relative">
+              {/* Custom unicorn icon using multiple elements */}
+              <div className="relative">
+                <div className={`w-5 h-5 rounded-full ${isDarkMode ? 'bg-purple-400' : 'bg-purple-600'}`}></div>
+                <Zap className={`absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 ${isDarkMode ? 'text-purple-300' : 'text-purple-500'}`} />
+              </div>
             </div>
             <span className={`font-semibold transition-colors duration-200 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>FinanceHub</span>
           </div>
@@ -39,26 +43,9 @@ export function NavBar({ isDarkMode = false }: NavBarProps) {
             <DropdownMenuContent className="w-56">
               <DropdownMenuLabel>Account Settings</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="w-4 h-4 mr-2" />
-                Profile Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
                 <Tag className="w-4 h-4 mr-2" />
                 Manage Categories
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Palette className="w-4 h-4 mr-2" />
-                Theme Preferences
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="w-4 h-4 mr-2" />
-                App Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Shield className="w-4 h-4 mr-2" />
-                Privacy & Security
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600">
