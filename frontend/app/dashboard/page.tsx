@@ -179,38 +179,23 @@ export default function FinancialTracker() {
 
   return (
     <div className={`min-h-screen transition-colors duration-200 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <NavBar />
+      <NavBar isDarkMode={isDarkMode} />
       <div className="p-4">
         <div className="max-w-6xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z"/>
-                  <path d="M12 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
-                  <path d="M12 9c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/>
-                </svg>
-              </div>
-              <div>
-                <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Financial Analysis</h1>
-                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Track your income and expenses</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={toggleDarkMode}
-                className={`${isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'}`}
-              >
-                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-              <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add Transaction
-              </Button>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleDarkMode}
+              className={`${isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Add Transaction
+            </Button>
           </div>
 
           {/* Summary Cards */}
