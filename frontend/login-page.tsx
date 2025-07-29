@@ -27,6 +27,7 @@ export default function Component() {
   })
 
   const [isDarkMode, setIsDarkMode] = useState(true)
+  const [message, setMessage] = useState({ text: '', type: '' }) // 'success' or 'error'
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode)
@@ -44,15 +45,80 @@ export default function Component() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      if (isLogin) {
+        // Login API call
+        const response = await fetch('http://localhost:5000/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        })
 
-    console.log("Form submitted:", formData)
+        const data = await response.json()
+
+        if (response.ok) {
+          console.log('Login successful:', data)
+          // Store user data in localStorage or state management
+          localStorage.setItem('user', JSON.stringify(data.user))
+          setMessage({ text: 'Login successful!', type: 'success' })
+          // You can redirect to dashboard here
+        } else {
+          setMessage({ text: data.error || 'Login failed', type: 'error' })
+        }
+      } else {
+        // Register API call
+        if (formData.password !== formData.confirmPassword) {
+          setMessage({ text: 'Passwords do not match', type: 'error' })
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch('http://localhost:5000/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            password: formData.password,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          console.log('Registration successful:', data)
+          setMessage({ text: 'Registration successful! Please login.', type: 'success' })
+          setIsLogin(true)
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            agreeToTerms: false,
+          })
+        } else {
+          setMessage({ text: data.error || 'Registration failed', type: 'error' })
+        }
+      }
+    } catch (error) {
+      console.error('API Error:', error)
+      setMessage({ text: 'Network error. Please try again.', type: 'error' })
+    }
+
     setIsLoading(false)
   }
 
   const toggleMode = () => {
     setIsLogin(!isLogin)
+    setMessage({ text: '', type: '' }) // Clear any existing messages
     setFormData({
       firstName: "",
       lastName: "",
@@ -155,6 +221,18 @@ export default function Component() {
 
           <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Message Display */}
+              {message.text && (
+                <div
+                  className={`p-3 rounded-md text-sm font-medium transition-all duration-300 ${
+                    message.type === 'success'
+                      ? 'bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400'
+                      : 'bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
               {!isLogin && (
                 <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top duration-500">
                   <div className="space-y-2">
