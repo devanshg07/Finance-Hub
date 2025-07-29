@@ -56,7 +56,7 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       if (!user.id) {
         // If no user logged in, use default categories
-        const response = await fetch('http://localhost:5000/api/categories')
+        const response = await fetch('https://finance-hub-hc1s.onrender.com/api/categories')
         const data = await response.json()
         setUserCategories({
           incomeCategories: data.incomeDescriptions.map((name: string, index: number) => ({
@@ -73,7 +73,7 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
         return
       }
 
-      const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
       if (response.ok) {
         const data = await response.json()
         setUserCategories({
@@ -82,7 +82,7 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
         })
       } else {
         // Fallback to default categories if no user categories found
-        const defaultResponse = await fetch('http://localhost:5000/api/categories')
+        const defaultResponse = await fetch('https://finance-hub-hc1s.onrender.com/api/categories')
         const defaultData = await defaultResponse.json()
         setUserCategories({
           incomeCategories: defaultData.incomeDescriptions.map((name: string, index: number) => ({

@@ -48,7 +48,7 @@ export default function ManageCategories() {
         return
       }
 
-      const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
       if (response.ok) {
         const data = await response.json()
         const hasCategories = (data.incomeCategories && data.incomeCategories.length > 0) || 
@@ -60,13 +60,13 @@ export default function ManageCategories() {
         } else {
           // No categories found, create default ones
           console.log('No categories found for user, creating defaults...')
-          const createResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}/default`, {
+          const createResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
             method: 'POST'
           })
           
           if (createResponse.ok) {
             // Reload categories after creating defaults
-            const reloadResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+            const reloadResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
             if (reloadResponse.ok) {
               const reloadData = await reloadResponse.json()
               setIncomeCategories(reloadData.incomeCategories || [])
@@ -84,13 +84,13 @@ export default function ManageCategories() {
         }
       } else {
         // If no saved categories, try to create defaults
-        const createResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}/default`, {
+        const createResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
           method: 'POST'
         })
         
         if (createResponse.ok) {
           // Reload categories after creating defaults
-          const reloadResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+          const reloadResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
           if (reloadResponse.ok) {
             const reloadData = await reloadResponse.json()
             setIncomeCategories(reloadData.incomeCategories || [])
@@ -134,7 +134,7 @@ export default function ManageCategories() {
 
       console.log('Saving categories for user:', user.id, 'Categories:', allCategories)
 
-      const response = await fetch('http://localhost:5000/api/user-categories', {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/user-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
