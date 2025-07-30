@@ -24,9 +24,11 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   
   console.log('CORS: Request from origin:', origin);
+  console.log('CORS: Request method:', req.method);
+  console.log('CORS: Request headers:', req.headers);
   
-  // Allow any Vercel domain or localhost
-  if (origin && (origin.includes('vercel.app') || origin.includes('localhost'))) {
+  // Allow any origin for now (for debugging)
+  if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
     console.log('CORS: Allowing origin:', origin);
   }
