@@ -21,20 +21,22 @@ app.use(bodyParser.json());
 
 // Enable CORS for frontend
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:5173'
-  ];
-  
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  
+  console.log('CORS: Request from origin:', origin);
+  
+  // Allow any Vercel domain or localhost
+  if (origin && (origin.includes('vercel.app') || origin.includes('localhost'))) {
     res.header('Access-Control-Allow-Origin', origin);
+    console.log('CORS: Allowing origin:', origin);
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
   if (req.method === 'OPTIONS') {
+    console.log('CORS: Handling preflight request');
     res.sendStatus(200);
   } else {
     next();
