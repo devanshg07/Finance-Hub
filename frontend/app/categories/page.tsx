@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, X, Check } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
+import { Plus, Trash2, ArrowLeft } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Category {
   id: string
@@ -19,70 +20,130 @@ interface UserCategories {
   expenseCategories: Category[]
 }
 
+// Dynamic color generation based on category name hash (same as pie chart and transaction list)
+const generateCategoryColor = (category: string) => {
+  // Create a hash from the category name
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    const char = category.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  
+  // Use the hash to generate consistent colors
+  const hue = Math.abs(hash) % 360
+  const saturation = 70 + (Math.abs(hash) % 20) // 70-90% saturation
+  const lightness = 45 + (Math.abs(hash) % 15) // 45-60% lightness for good contrast
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
 export default function CategorySelection() {
+  const [user, setUser] = useState<any>(null)
   const [userCategories, setUserCategories] = useState<UserCategories>({
     incomeCategories: [],
     expenseCategories: []
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Get user from localStorage
     const userData = localStorage.getItem('user')
     if (userData) {
       const userObj = JSON.parse(userData)
       setUser(userObj)
-      loadUserCategories(userObj.id)
+      loadUserCategories()
     } else {
       // Redirect to login if no user
       window.location.href = '/'
     }
   }, [])
 
-  const loadUserCategories = async (userId: string) => {
+  const loadUserCategories = async () => {
+    if (!user) return
+
+    setIsLoading(true)
     try {
-      const response = await fetch(`http://localhost:5000/api/user-categories/${userId}`)
+      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
       
       if (response.ok) {
         const data = await response.json()
         if (data.incomeCategories && data.expenseCategories) {
           setUserCategories(data)
         } else {
-          // Create default categories if none exist
-          await createDefaultCategories(userId)
+          // If no user-specific categories, create default ones
+          await createDefaultCategories()
         }
       } else {
-        // Create default categories if no saved categories
-        await createDefaultCategories(userId)
+        // If user doesn't exist or error, create default categories
+        await createDefaultCategories()
       }
     } catch (error) {
       console.error('Error loading categories:', error)
-      // Create default categories as fallback
-      if (user) {
-        await createDefaultCategories(user.id)
-      }
+      // Fallback to default categories
+      await createDefaultCategories()
     } finally {
       setIsLoading(false)
     }
   }
 
-  const createDefaultCategories = async (userId: string) => {
+  const createDefaultCategories = async () => {
+    if (!user) return
+
     try {
-      const response = await fetch(`http://localhost:5000/api/user-categories/${userId}/default`, {
+      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         }
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         setUserCategories(data)
+      } else {
+        // If backend fails, use hardcoded defaults
+        setUserCategories({
+          incomeCategories: [
+            { id: 'income-1', name: 'Salary', color: generateCategoryColor('Salary') },
+            { id: 'income-2', name: 'Freelance', color: generateCategoryColor('Freelance') },
+            { id: 'income-3', name: 'Investment', color: generateCategoryColor('Investment') },
+            { id: 'income-4', name: 'Business Income', color: generateCategoryColor('Business Income') }
+          ],
+          expenseCategories: [
+            { id: 'expense-1', name: 'Food & Dining', color: generateCategoryColor('Food & Dining') },
+            { id: 'expense-2', name: 'Transportation', color: generateCategoryColor('Transportation') },
+            { id: 'expense-3', name: 'Healthcare', color: generateCategoryColor('Healthcare') },
+            { id: 'expense-4', name: 'Shopping', color: generateCategoryColor('Shopping') },
+            { id: 'expense-5', name: 'Entertainment', color: generateCategoryColor('Entertainment') },
+            { id: 'expense-6', name: 'Rent / Mortgage', color: generateCategoryColor('Rent / Mortgage') },
+            { id: 'expense-7', name: 'Utilities', color: generateCategoryColor('Utilities') },
+            { id: 'expense-8', name: 'Other', color: generateCategoryColor('Other') }
+          ]
+        })
       }
     } catch (error) {
       console.error('Error creating default categories:', error)
+      // Use hardcoded defaults as fallback
+      setUserCategories({
+        incomeCategories: [
+          { id: 'income-1', name: 'Salary', color: generateCategoryColor('Salary') },
+          { id: 'income-2', name: 'Freelance', color: generateCategoryColor('Freelance') },
+          { id: 'income-3', name: 'Investment', color: generateCategoryColor('Investment') },
+          { id: 'income-4', name: 'Business Income', color: generateCategoryColor('Business Income') }
+        ],
+        expenseCategories: [
+          { id: 'expense-1', name: 'Food & Dining', color: generateCategoryColor('Food & Dining') },
+          { id: 'expense-2', name: 'Transportation', color: generateCategoryColor('Transportation') },
+          { id: 'expense-3', name: 'Healthcare', color: generateCategoryColor('Healthcare') },
+          { id: 'expense-4', name: 'Shopping', color: generateCategoryColor('Shopping') },
+          { id: 'expense-5', name: 'Entertainment', color: generateCategoryColor('Entertainment') },
+          { id: 'expense-6', name: 'Rent / Mortgage', color: generateCategoryColor('Rent / Mortgage') },
+          { id: 'expense-7', name: 'Utilities', color: generateCategoryColor('Utilities') },
+          { id: 'expense-8', name: 'Other', color: generateCategoryColor('Other') }
+        ]
+      })
     }
   }
 
@@ -149,14 +210,14 @@ export default function CategorySelection() {
         ...userCategories.expenseCategories.map(cat => ({ ...cat, type: 'expense' }))
       ]
 
-      const response = await fetch('http://localhost:5000/api/user-categories', {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/user-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user.id,
-          categories: categoriesArray
+          categories: categoriesArray // Sending as a flat array
         })
       })
 
@@ -165,8 +226,7 @@ export default function CategorySelection() {
           title: "Success",
           description: "Categories saved successfully!",
         })
-        // Redirect to dashboard
-        window.location.href = '/dashboard'
+        window.location.href = '/dashboard' // Redirect to dashboard
       } else {
         throw new Error('Failed to save categories')
       }
@@ -212,9 +272,9 @@ export default function CategorySelection() {
           <Card className="mx-2 sm:mx-0">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg sm:text-xl">Choose Your Categories</CardTitle>
-              <CardDescription className="text-sm">
+              <p className="text-sm text-muted-foreground">
                 Select or customize your income and expense categories. You can always change these later in settings.
-              </CardDescription>
+              </p>
             </CardHeader>
             <CardContent className="space-y-6 px-4 sm:px-6">
               {/* Income Categories */}
@@ -259,7 +319,7 @@ export default function CategorySelection() {
                         onClick={() => removeCategory('income', index)}
                         className="text-red-500 hover:text-red-700 self-end sm:self-auto"
                       >
-                        <X className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -308,7 +368,7 @@ export default function CategorySelection() {
                         onClick={() => removeCategory('expense', index)}
                         className="text-red-500 hover:text-red-700 self-end sm:self-auto"
                       >
-                        <X className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -332,7 +392,7 @@ export default function CategorySelection() {
                     disabled={isSaving} 
                     className="flex items-center gap-2 w-full sm:w-auto"
                   >
-                    <Check className="h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                     {isSaving ? 'Saving...' : 'Save & Continue'}
                   </Button>
                 </div>

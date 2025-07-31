@@ -33,7 +33,7 @@ export default function Dashboard() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/tasks')
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/tasks')
       if (response.ok) {
         const data = await response.json()
         setTransactions(data)
@@ -50,7 +50,7 @@ export default function Dashboard() {
     date: string
   }) => {
     try {
-      const response = await fetch('http://localhost:5000/api/tasks', {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export default function Dashboard() {
 
   const deleteTransaction = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/tasks/${id}`, {
         method: 'DELETE'
       })
 
@@ -269,4 +269,4 @@ export default function Dashboard() {
       )}
     </div>
   )
-} 
+}
