@@ -143,6 +143,12 @@ export default function CategorySelection() {
 
     setIsSaving(true)
     try {
+      // Convert the categories object to a flat array as expected by the backend
+      const categoriesArray = [
+        ...userCategories.incomeCategories.map(cat => ({ ...cat, type: 'income' })),
+        ...userCategories.expenseCategories.map(cat => ({ ...cat, type: 'expense' }))
+      ]
+
       const response = await fetch('http://localhost:5000/api/user-categories', {
         method: 'POST',
         headers: {
@@ -150,10 +156,7 @@ export default function CategorySelection() {
         },
         body: JSON.stringify({
           userId: user.id,
-          categories: {
-            incomeCategories: userCategories.incomeCategories,
-            expenseCategories: userCategories.expenseCategories
-          }
+          categories: categoriesArray
         })
       })
 
@@ -197,32 +200,32 @@ export default function CategorySelection() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Welcome to FinanceHub!</h1>
-            <p className="text-muted-foreground">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome to FinanceHub!</h1>
+            <p className="text-muted-foreground text-sm sm:text-base px-4">
               Let's set up your income and expense categories to get started.
             </p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Choose Your Categories</CardTitle>
-              <CardDescription>
+          <Card className="mx-2 sm:mx-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Choose Your Categories</CardTitle>
+              <CardDescription className="text-sm">
                 Select or customize your income and expense categories. You can always change these later in settings.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 px-4 sm:px-6">
               {/* Income Categories */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold text-green-600">Income Categories</Label>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <Label className="text-base sm:text-lg font-semibold text-green-600">Income Categories</Label>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => addCategory('income')}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4" />
                     Add Category
@@ -231,28 +234,30 @@ export default function CategorySelection() {
                 
                 <div className="grid gap-3">
                   {userCategories.incomeCategories.map((category, index) => (
-                    <div key={category.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div 
-                        className="w-4 h-4 rounded-full cursor-pointer"
-                        style={{ backgroundColor: category.color }}
-                        onClick={() => {
-                          const colors = ['#22c55e', '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981']
-                          const currentIndex = colors.indexOf(category.color)
-                          const nextColor = colors[(currentIndex + 1) % colors.length]
-                          updateCategory('income', index, 'color', nextColor)
-                        }}
-                      />
-                      <Input
-                        value={category.name}
-                        onChange={(e) => updateCategory('income', index, 'name', e.target.value)}
-                        placeholder="Category name"
-                        className="flex-1"
-                      />
+                    <div key={category.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div 
+                          className="w-5 h-5 rounded-full cursor-pointer flex-shrink-0"
+                          style={{ backgroundColor: category.color }}
+                          onClick={() => {
+                            const colors = ['#22c55e', '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981']
+                            const currentIndex = colors.indexOf(category.color)
+                            const nextColor = colors[(currentIndex + 1) % colors.length]
+                            updateCategory('income', index, 'color', nextColor)
+                          }}
+                        />
+                        <Input
+                          value={category.name}
+                          onChange={(e) => updateCategory('income', index, 'name', e.target.value)}
+                          placeholder="Category name"
+                          className="flex-1 min-w-0"
+                        />
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeCategory('income', index)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 self-end sm:self-auto"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -263,13 +268,13 @@ export default function CategorySelection() {
 
               {/* Expense Categories */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold text-red-600">Expense Categories</Label>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <Label className="text-base sm:text-lg font-semibold text-red-600">Expense Categories</Label>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => addCategory('expense')}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4" />
                     Add Category
@@ -278,28 +283,30 @@ export default function CategorySelection() {
                 
                 <div className="grid gap-3">
                   {userCategories.expenseCategories.map((category, index) => (
-                    <div key={category.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div 
-                        className="w-4 h-4 rounded-full cursor-pointer"
-                        style={{ backgroundColor: category.color }}
-                        onClick={() => {
-                          const colors = ['#ef4444', '#f97316', '#ec4899', '#eab308', '#dc2626', '#7c3aed']
-                          const currentIndex = colors.indexOf(category.color)
-                          const nextColor = colors[(currentIndex + 1) % colors.length]
-                          updateCategory('expense', index, 'color', nextColor)
-                        }}
-                      />
-                      <Input
-                        value={category.name}
-                        onChange={(e) => updateCategory('expense', index, 'name', e.target.value)}
-                        placeholder="Category name"
-                        className="flex-1"
-                      />
+                    <div key={category.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div 
+                          className="w-5 h-5 rounded-full cursor-pointer flex-shrink-0"
+                          style={{ backgroundColor: category.color }}
+                          onClick={() => {
+                            const colors = ['#ef4444', '#f97316', '#ec4899', '#eab308', '#dc2626', '#7c3aed']
+                            const currentIndex = colors.indexOf(category.color)
+                            const nextColor = colors[(currentIndex + 1) % colors.length]
+                            updateCategory('expense', index, 'color', nextColor)
+                          }}
+                        />
+                        <Input
+                          value={category.name}
+                          onChange={(e) => updateCategory('expense', index, 'name', e.target.value)}
+                          placeholder="Category name"
+                          className="flex-1 min-w-0"
+                        />
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeCategory('expense', index)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 self-end sm:self-auto"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -308,15 +315,23 @@ export default function CategorySelection() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-6">
-                <div className="text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t">
+                <div className="text-sm text-muted-foreground order-2 sm:order-1">
                   Total Categories: {userCategories.incomeCategories.length + userCategories.expenseCategories.length}
                 </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={skipCategories}>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto order-1 sm:order-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={skipCategories}
+                    className="w-full sm:w-auto"
+                  >
                     Skip for Now
                   </Button>
-                  <Button onClick={saveCategories} disabled={isSaving} className="flex items-center gap-2">
+                  <Button 
+                    onClick={saveCategories} 
+                    disabled={isSaving} 
+                    className="flex items-center gap-2 w-full sm:w-auto"
+                  >
                     <Check className="h-4 w-4" />
                     {isSaving ? 'Saving...' : 'Save & Continue'}
                   </Button>

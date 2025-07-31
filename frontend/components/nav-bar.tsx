@@ -2,13 +2,14 @@
 
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { User, LogOut, Settings, Palette, Tag, Shield, Zap } from "lucide-react"
+import { User, LogOut, Settings, Palette, Tag, Shield, Zap, Sun, Moon } from "lucide-react"
 
 interface NavBarProps {
   isDarkMode?: boolean
+  onToggleDarkMode?: () => void
 }
 
-export function NavBar({ isDarkMode = false }: NavBarProps) {
+export function NavBar({ isDarkMode = false, onToggleDarkMode }: NavBarProps) {
   const handleLogout = () => {
     localStorage.removeItem('user')
     window.location.href = '/'
@@ -29,8 +30,23 @@ export function NavBar({ isDarkMode = false }: NavBarProps) {
             </div>
             <span className={`font-semibold transition-colors duration-200 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>FinanceHub</span>
           </div>
-          <span className={`text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Track your income and expenses</span>
+          <span className={`text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} hidden sm:inline`}>Track your income and expenses</span>
         </div>
+        
+        {/* Dark Mode Toggle - Mobile Only - Centered */}
+        <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 sm:hidden">
+          {onToggleDarkMode && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onToggleDarkMode}
+              className={`${isDarkMode ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+          )}
+        </div>
+        
         {/* Profile Button absolutely right */}
         <div className="ml-auto absolute right-0 top-1/2 -translate-y-1/2">
           <DropdownMenu>

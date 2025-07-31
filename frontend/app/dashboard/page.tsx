@@ -179,34 +179,37 @@ export default function FinancialTracker() {
 
   return (
     <div className={`min-h-screen transition-colors duration-200 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <NavBar isDarkMode={isDarkMode} />
-      <div className="p-4">
-        <div className="max-w-6xl mx-auto space-y-6">
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3">
+      <NavBar isDarkMode={isDarkMode} onToggleDarkMode={toggleDarkMode} />
+      <div className="p-3 sm:p-4">
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+          {/* Action Buttons - Mobile Optimized */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
             <Button 
               variant="outline" 
               size="sm" 
               onClick={toggleDarkMode}
-              className={`${isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+              className={`flex-1 sm:flex-none hidden sm:flex ${isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'}`}
             >
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+            <Button 
+              onClick={() => setShowForm(true)} 
+              className="flex items-center justify-center gap-2 flex-1 sm:flex-none"
+            >
               <Plus className="w-4 h-4" />
               Add Transaction
             </Button>
           </div>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          {/* Summary Cards - Mobile Optimized */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} p-4 sm:p-6`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
                 <CardTitle className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Total Balance</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-600"}`}>
+              <CardContent className="px-0">
+                <div className={`text-xl sm:text-2xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-600"}`}>
                   ${balance.toFixed(2)}
                 </div>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
@@ -215,26 +218,26 @@ export default function FinancialTracker() {
               </CardContent>
             </Card>
 
-            <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} p-4 sm:p-6`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
                 <CardTitle className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Total Income</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">${totalIncome.toFixed(2)}</div>
+              <CardContent className="px-0">
+                <div className="text-xl sm:text-2xl font-bold text-green-600">${totalIncome.toFixed(2)}</div>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
                   {transactions.filter((t) => t.type === "income").length} transactions
                 </p>
               </CardContent>
             </Card>
 
-            <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} p-4 sm:p-6 sm:col-span-2 lg:col-span-1`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0">
                 <CardTitle className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Total Expenses</CardTitle>
                 <TrendingDown className="h-4 w-4 text-red-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">${totalExpenses.toFixed(2)}</div>
+              <CardContent className="px-0">
+                <div className="text-xl sm:text-2xl font-bold text-red-600">${totalExpenses.toFixed(2)}</div>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
                   {transactions.filter((t) => t.type === "expense").length} transactions
                 </p>
@@ -242,27 +245,27 @@ export default function FinancialTracker() {
             </Card>
           </div>
 
-          {/* Main Content */}
-          <Tabs defaultValue="transactions" className="space-y-6">
-            <TabsList className={`grid w-full grid-cols-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <TabsTrigger value="transactions">Transactions</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="categories">Categories</TabsTrigger>
+          {/* Main Content - Mobile Optimized */}
+          <Tabs defaultValue="transactions" className="space-y-4 sm:space-y-6">
+            <TabsList className={`grid w-full grid-cols-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-1`}>
+              <TabsTrigger value="transactions" className="text-xs sm:text-sm">Transactions</TabsTrigger>
+              <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+              <TabsTrigger value="categories" className="text-xs sm:text-sm">Categories</TabsTrigger>
             </TabsList>
 
             <TabsContent value="transactions">
-              <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+              <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} p-3 sm:p-6`}>
+                <CardHeader className="px-0 pb-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
-                      <CardTitle className={isDarkMode ? 'text-gray-200' : 'text-gray-900'}>Recent Transactions</CardTitle>
-                      <CardDescription className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      <CardTitle className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-lg sm:text-xl`}>Recent Transactions</CardTitle>
+                      <CardDescription className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
                         View and manage your income and expense transactions
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Select value={sortBy} onValueChange={(value: 'date' | 'category' | 'amount') => setSortBy(value)}>
-                        <SelectTrigger className={`w-32 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
+                        <SelectTrigger className={`w-full sm:w-32 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
                           <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
                         <SelectContent>
@@ -282,45 +285,45 @@ export default function FinancialTracker() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0">
                   <TransactionList transactions={sortedTransactions} onDeleteTransaction={deleteTransaction} />
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="analytics">
-              <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
-                <CardHeader>
-                  <CardTitle className={isDarkMode ? 'text-gray-200' : 'text-gray-900'}>Expense Trends</CardTitle>
-                  <CardDescription className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+              <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} p-3 sm:p-6`}>
+                <CardHeader className="px-0">
+                  <CardTitle className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-lg sm:text-xl`}>Expense Trends</CardTitle>
+                  <CardDescription className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
                     Monthly breakdown of your expenses
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0">
                   <ExpenseChart transactions={transactions} />
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="categories">
-              <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
-                <CardHeader>
-                  <CardTitle className={isDarkMode ? 'text-gray-200' : 'text-gray-900'}>Spending by Category</CardTitle>
-                  <CardDescription className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+              <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} p-3 sm:p-6`}>
+                <CardHeader className="px-0">
+                  <CardTitle className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-lg sm:text-xl`}>Spending by Category</CardTitle>
+                  <CardDescription className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
                     See where your money goes
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0">
                   <CategoryChart transactions={transactions} />
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
 
-          {/* Transaction Form Modal */}
+          {/* Transaction Form Modal - Mobile Optimized */}
           {showForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className={`rounded-lg max-w-md w-full ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+              <div className={`rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <TransactionForm 
                   onAddTransaction={addTransaction} 
                   onCancel={() => setShowForm(false)}
