@@ -32,6 +32,11 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', origin);
     console.log('CORS: Allowing origin:', origin);
   }
+  // Allow Vercel domains
+  else if (origin && origin.includes('vercel.app')) {
+    res.header('Access-Control-Allow-Origin', origin);
+    console.log('CORS: Allowing Vercel origin:', origin);
+  }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
