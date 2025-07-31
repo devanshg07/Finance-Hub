@@ -36,11 +36,11 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Monthly Expenses</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg">Monthly Expense Trends</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+      <CardContent className="pt-0">
+        <ResponsiveContainer width="100%" height={180}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
@@ -49,8 +49,9 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
                 const [year, month] = value.split('-')
                 return `${month}/${year.slice(2)}`
               }}
+              fontSize={12}
             />
-            <YAxis />
+            <YAxis fontSize={12} />
             <Tooltip 
               formatter={(value: number) => [`$${value.toFixed(2)}`, 'Total']}
               labelFormatter={(label) => {
@@ -63,7 +64,7 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
               dataKey="total" 
               stroke="#8884d8" 
               strokeWidth={2}
-              dot={{ fill: '#8884d8', strokeWidth: 2, r: 4 }}
+              dot={{ fill: '#8884d8', strokeWidth: 2, r: 3 }}
             />
           </LineChart>
         </ResponsiveContainer>

@@ -15,22 +15,41 @@ interface CategoryChartProps {
   transactions: Transaction[]
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
+// Dynamic color generation based on category name hash
+const generateCategoryColor = (category: string) => {
+  // Create a hash from the category name
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    const char = category.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  
+  // Use the hash to generate consistent colors
+  const hue = Math.abs(hash) % 360
+  const saturation = 70 + (Math.abs(hash) % 20) // 70-90% saturation
+  const lightness = 45 + (Math.abs(hash) % 15) // 45-60% lightness for good contrast
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
 
 export function CategoryChart({ transactions }: CategoryChartProps) {
-  const categoryData = transactions.reduce((acc, transaction) => {
+  // Filter out income transactions (positive amounts) - only show expenses
+  const expenseTransactions = transactions.filter(t => t.amount < 0)
+  
+  const categoryData = expenseTransactions.reduce((acc, transaction) => {
     const category = transaction.category
     if (acc[category]) {
-      acc[category] += transaction.amount
+      acc[category] += Math.abs(transaction.amount)
     } else {
-      acc[category] = transaction.amount
+      acc[category] = Math.abs(transaction.amount)
     }
     return acc
   }, {} as Record<string, number>)
 
   const data = Object.entries(categoryData).map(([name, value]) => ({
     name,
-    value: Math.abs(value)
+    value: value
   }))
 
   return (
@@ -52,7 +71,7 @@ export function CategoryChart({ transactions }: CategoryChartProps) {
               dataKey="value"
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={generateCategoryColor(entry.name)} />
               ))}
             </Pie>
             <Tooltip />

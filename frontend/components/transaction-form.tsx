@@ -4,11 +4,10 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Calendar } from "lucide-react"
+import { Plus, Calendar, ChevronDown } from "lucide-react"
 
 interface TransactionFormProps {
   onAddTransaction: (transaction: {
@@ -31,6 +30,24 @@ interface UserCategories {
   expenseCategories: Category[]
 }
 
+// Dynamic color generation based on category name hash (same as pie chart and transaction list)
+const generateCategoryColor = (category: string) => {
+  // Create a hash from the category name
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    const char = category.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  
+  // Use the hash to generate consistent colors
+  const hue = Math.abs(hash) % 360
+  const saturation = 70 + (Math.abs(hash) % 20) // 70-90% saturation
+  const lightness = 45 + (Math.abs(hash) % 15) // 45-60% lightness for good contrast
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
 export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormProps) {
   const [formData, setFormData] = useState({
     type: "expense",
@@ -46,6 +63,7 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
   })
 
   const [isLoading, setIsLoading] = useState(false)
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false)
 
   useEffect(() => {
     loadUserCategories()
@@ -76,17 +94,36 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
           incomeCategories: defaultData.incomeDescriptions.map((desc: string, index: number) => ({
             id: `income-${index}`,
             name: desc,
-            color: ['#22c55e', '#3b82f6', '#8b5cf6', '#06b6d4'][index % 4]
+            color: generateCategoryColor(desc)
           })),
           expenseCategories: defaultData.expenseDescriptions.map((desc: string, index: number) => ({
             id: `expense-${index}`,
             name: desc,
-            color: ['#ef4444', '#f97316', '#ec4899', '#eab308', '#dc2626', '#7c3aed'][index % 6]
+            color: generateCategoryColor(desc)
           }))
         })
       }
     } catch (error) {
       console.error('Error loading categories:', error)
+      // Fallback to hardcoded categories if backend is not available
+      setUserCategories({
+        incomeCategories: [
+          { id: 'income-1', name: 'Salary', color: generateCategoryColor('Salary') },
+          { id: 'income-2', name: 'Freelance', color: generateCategoryColor('Freelance') },
+          { id: 'income-3', name: 'Investment', color: generateCategoryColor('Investment') },
+          { id: 'income-4', name: 'Business Income', color: generateCategoryColor('Business Income') }
+        ],
+        expenseCategories: [
+          { id: 'expense-1', name: 'Food & Dining', color: generateCategoryColor('Food & Dining') },
+          { id: 'expense-2', name: 'Transportation', color: generateCategoryColor('Transportation') },
+          { id: 'expense-3', name: 'Healthcare', color: generateCategoryColor('Healthcare') },
+          { id: 'expense-4', name: 'Shopping', color: generateCategoryColor('Shopping') },
+          { id: 'expense-5', name: 'Entertainment', color: generateCategoryColor('Entertainment') },
+          { id: 'expense-6', name: 'Rent / Mortgage', color: generateCategoryColor('Rent / Mortgage') },
+          { id: 'expense-7', name: 'Utilities', color: generateCategoryColor('Utilities') },
+          { id: 'expense-8', name: 'Other', color: generateCategoryColor('Other') }
+        ]
+      })
     }
   }
 
@@ -132,15 +169,21 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
     ? userCategories.expenseCategories 
     : userCategories.incomeCategories
 
+  // Close dropdown when transaction type changes
+  useEffect(() => {
+    setIsCategoryOpen(false)
+    setFormData(prev => ({ ...prev, category: "" }))
+  }, [formData.type])
+
   return (
     <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Plus className="w-5 h-5" />
           Add Transaction
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Transaction Type */}
           <div className="space-y-2">
@@ -154,11 +197,11 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="income" id="income" />
-                <Label htmlFor="income" className="text-green-600">Income</Label>
+                <Label htmlFor="income" className="text-green-600 text-sm">Income</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="expense" id="expense" />
-                <Label htmlFor="expense" className="text-red-600">Expense</Label>
+                <Label htmlFor="expense" className="text-red-600 text-sm">Expense</Label>
               </div>
             </RadioGroup>
           </div>
@@ -174,66 +217,89 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               required
+              className="w-full"
             />
           </div>
 
-          {/* Category */}
+          {/* Category - Dynamic Dropdown */}
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {currentCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: category.color }}
-                      />
-                      {category.name}
+            <Label htmlFor="category">
+              {formData.type === 'income' ? 'Income' : 'Expense'} Category
+            </Label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between bg-white"
+              >
+                <span className={formData.category ? "text-gray-900" : "text-gray-500"}>
+                  {formData.category || `Select ${formData.type === 'income' ? 'income' : 'expense'} category`}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isCategoryOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {currentCategories.length > 0 ? (
+                    currentCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, category: category.name })
+                          setIsCategoryOpen(false)
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <div 
+                          className="w-3 h-3 rounded-full flex-shrink-0" 
+                          style={{ backgroundColor: generateCategoryColor(category.name) }}
+                        />
+                        <span className="truncate">{category.name}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-gray-500 text-sm">
+                      No {formData.type === 'income' ? 'income' : 'expense'} categories available
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description (Optional)</Label>
             <Textarea
               id="description"
-              placeholder="Enter transaction description (optional)"
+              placeholder="Enter description..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full"
             />
           </div>
 
           {/* Date */}
           <div className="space-y-2">
             <Label htmlFor="date">Date</Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="pl-10"
-                required
-              />
-            </div>
+            <Input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              required
+              className="w-full"
+            />
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-2 pt-4">
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
             <Button type="submit" disabled={isLoading} className="flex-1">
               {isLoading ? "Adding..." : "Add Transaction"}
             </Button>
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel}>
+              <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
                 Cancel
               </Button>
             )}
