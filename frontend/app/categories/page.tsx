@@ -81,8 +81,25 @@ export default function CategorySelection() {
       }
     } catch (error) {
       console.error('Error loading categories:', error)
-      // Fallback to default categories
-      await createDefaultCategories()
+      // Fallback to default categories immediately
+      setUserCategories({
+        incomeCategories: [
+          { id: 'income-1', name: 'Salary', color: generateCategoryColor('Salary') },
+          { id: 'income-2', name: 'Freelance', color: generateCategoryColor('Freelance') },
+          { id: 'income-3', name: 'Investment', color: generateCategoryColor('Investment') },
+          { id: 'income-4', name: 'Business Income', color: generateCategoryColor('Business Income') }
+        ],
+        expenseCategories: [
+          { id: 'expense-1', name: 'Food & Dining', color: generateCategoryColor('Food & Dining') },
+          { id: 'expense-2', name: 'Transportation', color: generateCategoryColor('Transportation') },
+          { id: 'expense-3', name: 'Healthcare', color: generateCategoryColor('Healthcare') },
+          { id: 'expense-4', name: 'Shopping', color: generateCategoryColor('Shopping') },
+          { id: 'expense-5', name: 'Entertainment', color: generateCategoryColor('Entertainment') },
+          { id: 'expense-6', name: 'Rent / Mortgage', color: generateCategoryColor('Rent / Mortgage') },
+          { id: 'expense-7', name: 'Utilities', color: generateCategoryColor('Utilities') },
+          { id: 'expense-8', name: 'Other', color: generateCategoryColor('Other') }
+        ]
+      })
     } finally {
       setIsLoading(false)
     }
@@ -249,10 +266,35 @@ export default function CategorySelection() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading categories...</p>
+          <Button 
+            size="lg"
+            className="text-lg px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+            onClick={() => {
+              setIsLoading(false)
+              setUserCategories({
+                incomeCategories: [
+                  { id: 'income-1', name: 'Salary', color: generateCategoryColor('Salary') },
+                  { id: 'income-2', name: 'Freelance', color: generateCategoryColor('Freelance') },
+                  { id: 'income-3', name: 'Investment', color: generateCategoryColor('Investment') },
+                  { id: 'income-4', name: 'Business Income', color: generateCategoryColor('Business Income') }
+                ],
+                expenseCategories: [
+                  { id: 'expense-1', name: 'Food & Dining', color: generateCategoryColor('Food & Dining') },
+                  { id: 'expense-2', name: 'Transportation', color: generateCategoryColor('Transportation') },
+                  { id: 'expense-3', name: 'Healthcare', color: generateCategoryColor('Healthcare') },
+                  { id: 'expense-4', name: 'Shopping', color: generateCategoryColor('Shopping') },
+                  { id: 'expense-5', name: 'Entertainment', color: generateCategoryColor('Entertainment') },
+                  { id: 'expense-6', name: 'Rent / Mortgage', color: generateCategoryColor('Rent / Mortgage') },
+                  { id: 'expense-7', name: 'Utilities', color: generateCategoryColor('Utilities') },
+                  { id: 'expense-8', name: 'Other', color: generateCategoryColor('Other') }
+                ]
+              })
+            }}
+          >
+            GO!
+          </Button>
         </div>
       </div>
     )

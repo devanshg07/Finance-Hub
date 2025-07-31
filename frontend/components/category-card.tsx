@@ -43,7 +43,7 @@ export function CategoryCard({ title, categories, onAddCategory, onRemoveCategor
         <div className="flex items-center justify-between">
           <CardTitle
             className={cn(
-              "text-lg font-semibold",
+              "text-lg sm:text-xl font-semibold",
               type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400",
             )}
           >
@@ -64,7 +64,7 @@ export function CategoryCard({ title, categories, onAddCategory, onRemoveCategor
               onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
               className="bg-background"
             />
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 justify-center">
               {colors.map((color) => (
                 <button
                   key={color}
@@ -77,7 +77,7 @@ export function CategoryCard({ title, categories, onAddCategory, onRemoveCategor
                 />
               ))}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-center">
               <Button size="sm" onClick={handleAddCategory}>
                 Add Category
               </Button>

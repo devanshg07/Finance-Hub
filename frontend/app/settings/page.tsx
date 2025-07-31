@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { CategoryCard } from "@/components/category-card"
-import { Settings, Save } from "lucide-react"
+import { Settings, Save, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 
@@ -13,17 +13,40 @@ interface Category {
   color: string
 }
 
-const initialIncomeCategories: Category[] = [
-  { id: "1", name: "Salary", color: "#22c55e" },
-  { id: "2", name: "Freelance", color: "#3b82f6" },
-  { id: "3", name: "Investments", color: "#8b5cf6" },
+// Dynamic color generation based on category name hash (same as dropdown)
+const generateCategoryColor = (category: string) => {
+  // Create a hash from the category name
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    const char = category.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  
+  // Use the hash to generate consistent colors
+  const hue = Math.abs(hash) % 360
+  const saturation = 70 + (Math.abs(hash) % 20) // 70-90% saturation
+  const lightness = 45 + (Math.abs(hash) % 15) // 45-60% lightness for good contrast
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
+const defaultIncomeCategories: Category[] = [
+  { id: "income-1", name: "Salary", color: generateCategoryColor('Salary') },
+  { id: "income-2", name: "Freelance", color: generateCategoryColor('Freelance') },
+  { id: "income-3", name: "Investment", color: generateCategoryColor('Investment') },
+  { id: "income-4", name: "Business Income", color: generateCategoryColor('Business Income') }
 ]
 
-const initialExpenseCategories: Category[] = [
-  { id: "4", name: "Food & Dining", color: "#ef4444" },
-  { id: "5", name: "Transportation", color: "#f97316" },
-  { id: "6", name: "Shopping", color: "#ec4899" },
-  { id: "7", name: "Bills & Utilities", color: "#eab308" },
+const defaultExpenseCategories: Category[] = [
+  { id: "expense-1", name: "Food & Dining", color: generateCategoryColor('Food & Dining') },
+  { id: "expense-2", name: "Transportation", color: generateCategoryColor('Transportation') },
+  { id: "expense-3", name: "Healthcare", color: generateCategoryColor('Healthcare') },
+  { id: "expense-4", name: "Shopping", color: generateCategoryColor('Shopping') },
+  { id: "expense-5", name: "Entertainment", color: generateCategoryColor('Entertainment') },
+  { id: "expense-6", name: "Rent / Mortgage", color: generateCategoryColor('Rent / Mortgage') },
+  { id: "expense-7", name: "Utilities", color: generateCategoryColor('Utilities') },
+  { id: "expense-8", name: "Other", color: generateCategoryColor('Other') }
 ]
 
 export default function ManageCategories() {
@@ -42,13 +65,13 @@ export default function ManageCategories() {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       if (!user.id) {
         // If no user, use default categories
-        setIncomeCategories(initialIncomeCategories)
-        setExpenseCategories(initialExpenseCategories)
+        setIncomeCategories(defaultIncomeCategories)
+        setExpenseCategories(defaultExpenseCategories)
         setIsLoading(false)
         return
       }
 
-      const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
       if (response.ok) {
         const data = await response.json()
         const hasCategories = (data.incomeCategories && data.incomeCategories.length > 0) || 
@@ -60,92 +83,89 @@ export default function ManageCategories() {
         } else {
           // No categories found, create default ones
           console.log('No categories found for user, creating defaults...')
-          const createResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}/default`, {
+          const createResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
             method: 'POST'
           })
           
           if (createResponse.ok) {
             // Reload categories after creating defaults
-            const reloadResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+            const reloadResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
             if (reloadResponse.ok) {
               const reloadData = await reloadResponse.json()
               setIncomeCategories(reloadData.incomeCategories || [])
               setExpenseCategories(reloadData.expenseCategories || [])
             } else {
-              // Fallback to initial categories
-              setIncomeCategories(initialIncomeCategories)
-              setExpenseCategories(initialExpenseCategories)
+              // Fallback to default categories
+              setIncomeCategories(defaultIncomeCategories)
+              setExpenseCategories(defaultExpenseCategories)
             }
           } else {
-            // Fallback to initial categories
-            setIncomeCategories(initialIncomeCategories)
-            setExpenseCategories(initialExpenseCategories)
+            // Fallback to default categories
+            setIncomeCategories(defaultIncomeCategories)
+            setExpenseCategories(defaultExpenseCategories)
           }
         }
       } else {
         // If no saved categories, try to create defaults
-        const createResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}/default`, {
+        const createResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
           method: 'POST'
         })
         
         if (createResponse.ok) {
           // Reload categories after creating defaults
-          const reloadResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+          const reloadResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
           if (reloadResponse.ok) {
             const reloadData = await reloadResponse.json()
             setIncomeCategories(reloadData.incomeCategories || [])
             setExpenseCategories(reloadData.expenseCategories || [])
           } else {
-            setIncomeCategories(initialIncomeCategories)
-            setExpenseCategories(initialExpenseCategories)
+            setIncomeCategories(defaultIncomeCategories)
+            setExpenseCategories(defaultExpenseCategories)
           }
         } else {
-          setIncomeCategories(initialIncomeCategories)
-          setExpenseCategories(initialExpenseCategories)
+          setIncomeCategories(defaultIncomeCategories)
+          setExpenseCategories(defaultExpenseCategories)
         }
       }
     } catch (error) {
       console.error('Error loading categories:', error)
-      // Use default categories on error
-      setIncomeCategories(initialIncomeCategories)
-      setExpenseCategories(initialExpenseCategories)
+      // Fallback to default categories
+      setIncomeCategories(defaultIncomeCategories)
+      setExpenseCategories(defaultExpenseCategories)
     } finally {
       setIsLoading(false)
     }
   }
 
   const saveCategories = async () => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
-    if (!user.id) {
-      toast({
-        title: "Error",
-        description: "Please log in to save categories",
-        variant: "destructive",
-      })
-      return
-    }
-
     setIsSaving(true)
     try {
-      const allCategories = [
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      if (!user.id) {
+        toast({
+          title: "Error",
+          description: "Please log in to save categories.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Convert to the format expected by the backend
+      const categoriesArray = [
         ...incomeCategories.map(cat => ({ ...cat, type: 'income' })),
         ...expenseCategories.map(cat => ({ ...cat, type: 'expense' }))
       ]
 
-      console.log('Saving categories for user:', user.id, 'Categories:', allCategories)
-
-      const response = await fetch('http://localhost:5000/api/user-categories', {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/user-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user.id,
-          categories: allCategories
+          categories: categoriesArray
         })
       })
-
-      const responseData = await response.json()
 
       if (response.ok) {
         toast({
@@ -153,15 +173,13 @@ export default function ManageCategories() {
           description: "Categories saved successfully!",
         })
       } else {
-        console.error('Server error response:', responseData)
-        throw new Error(responseData.error || 'Failed to save categories')
+        throw new Error('Failed to save categories')
       }
     } catch (error) {
       console.error('Error saving categories:', error)
-      const errorMessage = error instanceof Error ? error.message : "Failed to save categories. Please try again."
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Failed to save categories. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -213,62 +231,104 @@ export default function ManageCategories() {
       <Header />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Settings Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-accent">
-              <Settings className="h-5 w-5" />
+        {/* Desktop Layout */}
+        <div className="hidden lg:block">
+          {/* Manage Categories Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-2xl font-semibold">Manage Categories</h2>
+              <Button 
+                onClick={saveCategories} 
+                disabled={isSaving}
+                className="flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Categories'}
+              </Button>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Settings</h1>
-              <p className="text-muted-foreground">Manage your account preferences and categories</p>
+            <p className="text-muted-foreground mb-6">
+              Organize your transactions by creating and managing income and expense categories. Categories help you
+              track where your money comes from and where it goes. Click "Save Categories" to persist your changes.
+            </p>
+          </div>
+
+          {/* Categories Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl">
+            <CategoryCard
+              title="Income Categories"
+              categories={incomeCategories}
+              onAddCategory={addIncomeCategory}
+              onRemoveCategory={removeIncomeCategory}
+              type="income"
+            />
+
+            <CategoryCard
+              title="Expense Categories"
+              categories={expenseCategories}
+              onAddCategory={addExpenseCategory}
+              onRemoveCategory={removeExpenseCategory}
+              type="expense"
+            />
+          </div>
+
+          {/* Summary Stats */}
+          <div className="mt-8 p-4 rounded-lg bg-accent/20 border">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total Categories:</span>
+              <span className="font-medium">{incomeCategories.length + expenseCategories.length}</span>
             </div>
           </div>
         </div>
 
-        {/* Manage Categories Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-semibold">Manage Categories</h2>
-            <Button 
-              onClick={saveCategories} 
-              disabled={isSaving}
-              className="flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save Categories'}
-            </Button>
-          </div>
-          <p className="text-muted-foreground mb-6">
-            Organize your transactions by creating and managing income and expense categories. Categories help you
-            track where your money comes from and where it goes. Click "Save Categories" to persist your changes.
-          </p>
-        </div>
+        {/* Mobile Layout */}
+        <div className="lg:hidden">
+          <div className="max-w-2xl mx-auto">
+            
+            {/* Header Section - Centered */}
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-3">Manage Categories</h2>
+              <p className="text-sm text-muted-foreground mb-4 px-4">
+                Organize your transactions by creating and managing income and expense categories.
+              </p>
+              <div className="flex justify-center">
+                <Button 
+                  onClick={saveCategories} 
+                  disabled={isSaving}
+                  className="flex items-center gap-2"
+                  size="lg"
+                >
+                  <Save className="h-4 w-4" />
+                  {isSaving ? 'Saving...' : 'Save Categories'}
+                </Button>
+              </div>
+            </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl">
-          <CategoryCard
-            title="Income Categories"
-            categories={incomeCategories}
-            onAddCategory={addIncomeCategory}
-            onRemoveCategory={removeIncomeCategory}
-            type="income"
-          />
+            {/* Categories - Single Column on Mobile */}
+            <div className="space-y-6">
+              <CategoryCard
+                title="Income Categories"
+                categories={incomeCategories}
+                onAddCategory={addIncomeCategory}
+                onRemoveCategory={removeIncomeCategory}
+                type="income"
+              />
 
-          <CategoryCard
-            title="Expense Categories"
-            categories={expenseCategories}
-            onAddCategory={addExpenseCategory}
-            onRemoveCategory={removeExpenseCategory}
-            type="expense"
-          />
-        </div>
+              <CategoryCard
+                title="Expense Categories"
+                categories={expenseCategories}
+                onAddCategory={addExpenseCategory}
+                onRemoveCategory={removeExpenseCategory}
+                type="expense"
+              />
+            </div>
 
-        {/* Summary Stats */}
-        <div className="mt-8 p-4 rounded-lg bg-accent/20 border">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total Categories:</span>
-            <span className="font-medium">{incomeCategories.length + expenseCategories.length}</span>
+            {/* Summary Stats - Centered */}
+            <div className="mt-8 p-4 rounded-lg bg-accent/20 border text-center">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Total Categories: </span>
+                <span className="font-bold text-lg">{incomeCategories.length + expenseCategories.length}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
