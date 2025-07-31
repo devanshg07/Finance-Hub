@@ -27,8 +27,8 @@ app.use((req, res, next) => {
   console.log('CORS: Request method:', req.method);
   console.log('CORS: Request headers:', req.headers);
   
-  // Allow any origin for now (for debugging)
-  if (origin) {
+  // Allow localhost for local development
+  if (origin && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
     res.header('Access-Control-Allow-Origin', origin);
     console.log('CORS: Allowing origin:', origin);
   }

@@ -39,7 +39,7 @@ export default function FinancialTracker() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [isDarkMode, setIsDarkMode] = useState(false)
 
-  const API_URL = 'https://finance-hub-hc1s.onrender.com/api'; // Updated API URL
+  const API_URL = 'http://localhost:5000/api'; // Local API URL
 
   // Toggle dark mode
   const toggleDarkMode = () => {

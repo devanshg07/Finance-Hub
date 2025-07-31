@@ -53,57 +53,40 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
 
   const loadUserCategories = async () => {
     try {
+      // First try to get user-specific categories
       const user = JSON.parse(localStorage.getItem('user') || '{}')
-      if (!user.id) {
-        // If no user logged in, use default categories
-        const response = await fetch('https://finance-hub-hc1s.onrender.com/api/categories')
-        const data = await response.json()
-        setUserCategories({
-          incomeCategories: data.incomeDescriptions.map((name: string, index: number) => ({
-            id: `default-income-${index}`,
-            name,
-            color: '#22c55e'
-          })),
-          expenseCategories: data.expenseDescriptions.map((name: string, index: number) => ({
-            id: `default-expense-${index}`,
-            name,
-            color: '#ef4444'
-          }))
-        })
-        return
+      
+      if (user.id) {
+        const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.incomeCategories && data.expenseCategories) {
+            setUserCategories(data)
+            return
+          }
+        }
       }
-
-      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setUserCategories({
-          incomeCategories: data.incomeCategories || [],
-          expenseCategories: data.expenseCategories || []
-        })
-      } else {
-        // Fallback to default categories if no user categories found
-        const defaultResponse = await fetch('https://finance-hub-hc1s.onrender.com/api/categories')
+      
+      // Fallback to default categories
+      const defaultResponse = await fetch('http://localhost:5000/api/categories')
+      if (defaultResponse.ok) {
         const defaultData = await defaultResponse.json()
         setUserCategories({
-          incomeCategories: defaultData.incomeDescriptions.map((name: string, index: number) => ({
-            id: `default-income-${index}`,
-            name,
-            color: '#22c55e'
+          incomeCategories: defaultData.incomeDescriptions.map((desc: string, index: number) => ({
+            id: `income-${index}`,
+            name: desc,
+            color: ['#22c55e', '#3b82f6', '#8b5cf6', '#06b6d4'][index % 4]
           })),
-          expenseCategories: defaultData.expenseDescriptions.map((name: string, index: number) => ({
-            id: `default-expense-${index}`,
-            name,
-            color: '#ef4444'
+          expenseCategories: defaultData.expenseDescriptions.map((desc: string, index: number) => ({
+            id: `expense-${index}`,
+            name: desc,
+            color: ['#ef4444', '#f97316', '#ec4899', '#eab308', '#dc2626', '#7c3aed'][index % 6]
           }))
         })
       }
     } catch (error) {
       console.error('Error loading categories:', error)
-      // Use empty arrays on error
-      setUserCategories({
-        incomeCategories: [],
-        expenseCategories: []
-      })
     }
   }
 

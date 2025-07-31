@@ -62,7 +62,7 @@ export default function Component() {
 
       if (response.ok) {
         localStorage.setItem('user', JSON.stringify(data.user))
-        window.location.href = '/dashboard'
+        window.location.href = '/categories'
       } else {
         setMessage({ text: data.error || 'Login failed', type: 'error' })
       }
@@ -101,7 +101,7 @@ export default function Component() {
 
       if (response.ok) {
         localStorage.setItem('user', JSON.stringify(data.user))
-        window.location.href = '/dashboard'
+        window.location.href = '/categories'
       } else {
         setMessage({ text: data.error || 'Registration failed', type: 'error' })
       }
