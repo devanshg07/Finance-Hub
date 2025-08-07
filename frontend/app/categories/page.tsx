@@ -65,7 +65,7 @@ export default function CategorySelection() {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
+      const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -109,7 +109,7 @@ export default function CategorySelection() {
     if (!user) return
 
     try {
-      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
+      const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}/default`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -227,7 +227,7 @@ export default function CategorySelection() {
         ...userCategories.expenseCategories.map(cat => ({ ...cat, type: 'expense' }))
       ]
 
-      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/user-categories', {
+      const response = await fetch('http://localhost:5000/api/user-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
