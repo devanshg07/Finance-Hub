@@ -157,13 +157,16 @@ app.post('/api/register', async (req, res) => {
           const userId = this.lastID;
           console.log('User registered successfully with ID:', userId);
           
-          // Create default categories for the new user
-          createDefaultCategories(userId);
-
+          // Return response immediately, create categories in background
           res.status(201).json({
             message: 'User registered successfully',
             user: { id: userId, username, email }
           });
+
+          // Create default categories in background (non-blocking)
+          setTimeout(() => {
+            createDefaultCategories(userId);
+          }, 100);
         }
       );
     });
@@ -193,22 +196,21 @@ function createDefaultCategories(userId) {
     { name: 'Savings', color: '#0891b2', type: 'expense' }
   ];
 
-  const stmt = db.prepare('INSERT INTO user_categories (user_id, name, color, type) VALUES (?, ?, ?, ?)');
-  
-  defaultCategories.forEach(category => {
-    stmt.run([userId, category.name, category.color, category.type], (err) => {
+  // Use a single transaction for better performance
+  db.serialize(() => {
+    const stmt = db.prepare('INSERT INTO user_categories (user_id, name, color, type) VALUES (?, ?, ?, ?)');
+    
+    defaultCategories.forEach(category => {
+      stmt.run([userId, category.name, category.color, category.type]);
+    });
+    
+    stmt.finalize((err) => {
       if (err) {
-        console.error('Error creating default category:', err);
+        console.error('Error finalizing default categories:', err);
+      } else {
+        console.log('Created default categories for user:', userId);
       }
     });
-  });
-
-  stmt.finalize((err) => {
-    if (err) {
-      console.error('Error finalizing default categories:', err);
-    } else {
-      console.log('Created default categories for user:', userId);
-    }
   });
 }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { CategoryCard } from "@/components/category-card"
-import { Settings, Save, LogOut } from "lucide-react"
+import { Settings, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 
@@ -53,7 +53,6 @@ export default function ManageCategories() {
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([])
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
 
   // Load user categories on component mount
   useEffect(() => {
@@ -137,26 +136,64 @@ export default function ManageCategories() {
     }
   }
 
-  const saveCategories = async () => {
-    setIsSaving(true)
+
+
+  const addIncomeCategory = async (name: string, color: string) => {
+    const newCategory: Category = {
+      id: Date.now().toString(),
+      name,
+      color,
+    }
+    const updatedCategories = [...incomeCategories, newCategory]
+    setIncomeCategories(updatedCategories)
+    
+    // Auto-save
+    await saveCategoriesToBackend(updatedCategories, expenseCategories)
+  }
+
+  const addExpenseCategory = async (name: string, color: string) => {
+    const newCategory: Category = {
+      id: Date.now().toString(),
+      name,
+      color,
+    }
+    const updatedCategories = [...expenseCategories, newCategory]
+    setExpenseCategories(updatedCategories)
+    
+    // Auto-save
+    await saveCategoriesToBackend(incomeCategories, updatedCategories)
+  }
+
+  const removeIncomeCategory = async (id: string) => {
+    const updatedCategories = incomeCategories.filter((cat) => cat.id !== id)
+    setIncomeCategories(updatedCategories)
+    
+    // Auto-save
+    await saveCategoriesToBackend(updatedCategories, expenseCategories)
+  }
+
+  const removeExpenseCategory = async (id: string) => {
+    const updatedCategories = expenseCategories.filter((cat) => cat.id !== id)
+    setExpenseCategories(updatedCategories)
+    
+    // Auto-save
+    await saveCategoriesToBackend(incomeCategories, updatedCategories)
+  }
+
+  // Helper function to save categories to backend
+  const saveCategoriesToBackend = async (incomeCats: Category[], expenseCats: Category[]) => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       if (!user.id) {
-        toast({
-          title: "Error",
-          description: "Please log in to save categories.",
-          variant: "destructive",
-        })
         return
       }
 
-      // Convert to the format expected by the backend
       const categoriesArray = [
-        ...incomeCategories.map(cat => ({ ...cat, type: 'income' })),
-        ...expenseCategories.map(cat => ({ ...cat, type: 'expense' }))
+        ...incomeCats.map(cat => ({ ...cat, type: 'income' })),
+        ...expenseCats.map(cat => ({ ...cat, type: 'expense' }))
       ]
 
-      const response = await fetch('http://localhost:5000/api/user-categories', {
+      await fetch('http://localhost:5000/api/user-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,51 +203,9 @@ export default function ManageCategories() {
           categories: categoriesArray
         })
       })
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Categories saved successfully!",
-        })
-      } else {
-        throw new Error('Failed to save categories')
-      }
     } catch (error) {
-      console.error('Error saving categories:', error)
-      toast({
-        title: "Error",
-        description: "Failed to save categories. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSaving(false)
+      console.error('Error auto-saving categories:', error)
     }
-  }
-
-  const addIncomeCategory = (name: string, color: string) => {
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name,
-      color,
-    }
-    setIncomeCategories([...incomeCategories, newCategory])
-  }
-
-  const addExpenseCategory = (name: string, color: string) => {
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name,
-      color,
-    }
-    setExpenseCategories([...expenseCategories, newCategory])
-  }
-
-  const removeIncomeCategory = (id: string) => {
-    setIncomeCategories(incomeCategories.filter((cat) => cat.id !== id))
-  }
-
-  const removeExpenseCategory = (id: string) => {
-    setExpenseCategories(expenseCategories.filter((cat) => cat.id !== id))
   }
 
   if (isLoading) {
@@ -235,20 +230,12 @@ export default function ManageCategories() {
         <div className="hidden lg:block">
           {/* Manage Categories Section */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-semibold">Manage Categories</h2>
-              <Button 
-                onClick={saveCategories} 
-                disabled={isSaving}
-                className="flex items-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? 'Saving...' : 'Save Categories'}
-              </Button>
-            </div>
+                      <div className="mb-2">
+            <h2 className="text-2xl font-semibold">Manage Categories</h2>
+          </div>
             <p className="text-muted-foreground mb-6">
               Organize your transactions by creating and managing income and expense categories. Categories help you
-              track where your money comes from and where it goes. Click "Save Categories" to persist your changes.
+              track where your money comes from and where it goes. Changes are automatically saved.
             </p>
           </div>
 
@@ -288,19 +275,8 @@ export default function ManageCategories() {
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold mb-3">Manage Categories</h2>
               <p className="text-sm text-muted-foreground mb-4 px-4">
-                Organize your transactions by creating and managing income and expense categories.
+                Organize your transactions by creating and managing income and expense categories. Changes are automatically saved.
               </p>
-              <div className="flex justify-center">
-                <Button 
-                  onClick={saveCategories} 
-                  disabled={isSaving}
-                  className="flex items-center gap-2"
-                  size="lg"
-                >
-                  <Save className="h-4 w-4" />
-                  {isSaving ? 'Saving...' : 'Save Categories'}
-                </Button>
-              </div>
             </div>
 
             {/* Categories - Single Column on Mobile */}
