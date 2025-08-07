@@ -113,7 +113,7 @@ export default function CategorySelection() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
       })
 
       if (response.ok) {

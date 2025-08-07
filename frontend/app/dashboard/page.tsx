@@ -413,6 +413,7 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-background rounded-lg p-4 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <TransactionForm
+              key={showForm ? Date.now() : undefined}
               onAddTransaction={addTransaction}
               onCancel={() => setShowForm(false)}
             />

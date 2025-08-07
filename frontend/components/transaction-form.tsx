@@ -67,7 +67,7 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
 
   useEffect(() => {
     loadUserCategories()
-  }, [])
+  }, [/* add key prop as dependency if present */])
 
   const loadUserCategories = async () => {
     try {

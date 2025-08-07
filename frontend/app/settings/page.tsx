@@ -193,7 +193,7 @@ export default function ManageCategories() {
         ...expenseCats.map(cat => ({ ...cat, type: 'expense' }))
       ]
 
-      await fetch('http://localhost:5000/api/user-categories', {
+      await fetch('https://finance-hub-hc1s.onrender.com/api/user-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
