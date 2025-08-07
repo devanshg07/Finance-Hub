@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 interface Transaction {
@@ -34,41 +33,45 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
       total
     }))
 
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <div className="text-center">
+          <div className="text-lg font-medium mb-2">No data yet</div>
+          <div className="text-sm">Add some transactions to see your spending trends</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base sm:text-lg">Monthly Expense Trends</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <ResponsiveContainer width="100%" height={180}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="month" 
-              tickFormatter={(value) => {
-                const [year, month] = value.split('-')
-                return `${month}/${year.slice(2)}`
-              }}
-              fontSize={12}
-            />
-            <YAxis fontSize={12} />
-            <Tooltip 
-              formatter={(value: number) => [`$${value.toFixed(2)}`, 'Total']}
-              labelFormatter={(label) => {
-                const [year, month] = label.split('-')
-                return `${month}/${year}`
-              }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="total" 
-              stroke="#8884d8" 
-              strokeWidth={2}
-              dot={{ fill: '#8884d8', strokeWidth: 2, r: 3 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis 
+          dataKey="month" 
+          tickFormatter={(value) => {
+            const [year, month] = value.split('-')
+            return `${month}/${year.slice(2)}`
+          }}
+          fontSize={12}
+        />
+        <YAxis fontSize={12} />
+        <Tooltip 
+          formatter={(value: number) => [`$${value.toFixed(2)}`, 'Total']}
+          labelFormatter={(label) => {
+            const [year, month] = label.split('-')
+            return `${month}/${year}`
+          }}
+        />
+        <Line 
+          type="monotone" 
+          dataKey="total" 
+          stroke="#8884d8" 
+          strokeWidth={2}
+          dot={{ fill: '#8884d8', strokeWidth: 2, r: 3 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   )
 }

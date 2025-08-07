@@ -13,7 +13,7 @@ import { TransactionForm } from "@/components/transaction-form"
 import { TransactionList } from "@/components/transaction-list"
 import { CategoryChart } from "@/components/category-chart"
 import { ExpenseChart } from "@/components/expense-chart"
-import { Plus, TrendingUp, TrendingDown, SortAsc, SortDesc, Search, Filter, ChevronDown } from "lucide-react"
+import { Plus, TrendingUp, TrendingDown, SortAsc, SortDesc, Search, Filter, ChevronDown, X } from "lucide-react"
 
 interface Transaction {
   id: number
@@ -137,26 +137,28 @@ export default function Dashboard() {
     return sortOrder === 'asc' ? -comparison : comparison
   })
 
+  const hasActiveFilters = searchQuery || filterCategory !== 'all' || filterType !== 'all'
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Mobile-Optimized Layout */}
-      <div className="p-3 sm:p-4 md:p-6">
+      {/* Mobile-Optimized Layout with Better Spacing */}
+      <div className="p-3 sm:p-4 md:p-6 pb-24">
         <div className="max-w-4xl mx-auto space-y-4">
           
           {/* Floating Action Button - Mobile First */}
-          <div className="fixed bottom-6 right-6 z-40">
+          <div className="fixed bottom-4 right-4 z-40">
             <Button
               onClick={() => setShowForm(true)}
               size="lg"
-              className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+              className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90"
             >
-              <Plus className="w-6 h-6" />
+              <Plus className="w-5 h-5" />
             </Button>
           </div>
 
-          {/* Summary Cards - Simplified for Mobile */}
+          {/* Summary Cards - Mobile Optimized */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <Card className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
               <div className="flex items-center justify-between mb-2">
@@ -199,7 +201,9 @@ export default function Dashboard() {
                     Track where your money goes
                   </p>
                 </div>
-                <CategoryChart transactions={transactions} />
+                <div className="w-full h-72 sm:h-80">
+                  <CategoryChart transactions={transactions} />
+                </div>
               </Card>
             </TabsContent>
 
@@ -214,7 +218,7 @@ export default function Dashboard() {
                   </p>
                 </div>
                 
-                {/* Enhanced Search and Filter Controls */}
+                {/* Mobile-Optimized Search and Filter Controls */}
                 <div className="space-y-3 mb-4">
                   {/* Search Bar */}
                   <div className="relative">
@@ -223,14 +227,24 @@ export default function Dashboard() {
                       placeholder="Search transactions..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 h-10"
                     />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
-                  {/* Filter Controls */}
-                  <div className="flex gap-2">
+                  {/* Compact Filter Controls */}
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Select value={filterType} onValueChange={(value: 'all' | 'income' | 'expense') => setFilterType(value)}>
-                      <SelectTrigger className="flex-1">
+                      <SelectTrigger className="flex-1 h-10 text-sm">
                         <Filter className="h-4 w-4 mr-2" />
                         <SelectValue placeholder="Type" />
                       </SelectTrigger>
@@ -242,7 +256,7 @@ export default function Dashboard() {
                     </Select>
 
                     <Select value={filterCategory} onValueChange={setFilterCategory}>
-                      <SelectTrigger className="flex-1">
+                      <SelectTrigger className="flex-1 h-10 text-sm">
                         <SelectValue placeholder="Category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -253,13 +267,13 @@ export default function Dashboard() {
                       </SelectContent>
                     </Select>
 
-                    {/* Compact Sort Popup */}
+                    {/* Ultra-Compact Sort Popup */}
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="px-3">
-                          <SortAsc className="h-4 w-4 mr-1" />
+                        <Button variant="outline" size="sm" className="h-10 px-3 text-sm">
+                          <SortAsc className="h-4 w-4 mr-2" />
                           Sort
-                          <ChevronDown className="h-4 w-4 ml-1" />
+                          <ChevronDown className="h-4 w-4 ml-2" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-48" align="end">
@@ -269,7 +283,7 @@ export default function Dashboard() {
                             <Button
                               variant={sortBy === 'date' ? 'default' : 'ghost'}
                               size="sm"
-                              className="w-full justify-start"
+                              className="w-full justify-start h-8 text-sm"
                               onClick={() => setSortBy('date')}
                             >
                               Date
@@ -277,7 +291,7 @@ export default function Dashboard() {
                             <Button
                               variant={sortBy === 'category' ? 'default' : 'ghost'}
                               size="sm"
-                              className="w-full justify-start"
+                              className="w-full justify-start h-8 text-sm"
                               onClick={() => setSortBy('category')}
                             >
                               Category
@@ -285,7 +299,7 @@ export default function Dashboard() {
                             <Button
                               variant={sortBy === 'amount' ? 'default' : 'ghost'}
                               size="sm"
-                              className="w-full justify-start"
+                              className="w-full justify-start h-8 text-sm"
                               onClick={() => setSortBy('amount')}
                             >
                               Amount
@@ -297,7 +311,7 @@ export default function Dashboard() {
                               <Button
                                 variant={sortOrder === 'desc' ? 'default' : 'ghost'}
                                 size="sm"
-                                className="w-full justify-start"
+                                className="w-full justify-start h-8 text-sm"
                                 onClick={() => setSortOrder('desc')}
                               >
                                 <SortDesc className="h-4 w-4 mr-2" />
@@ -306,7 +320,7 @@ export default function Dashboard() {
                               <Button
                                 variant={sortOrder === 'asc' ? 'default' : 'ghost'}
                                 size="sm"
-                                className="w-full justify-start"
+                                className="w-full justify-start h-8 text-sm"
                                 onClick={() => setSortOrder('asc')}
                               >
                                 <SortAsc className="h-4 w-4 mr-2" />
@@ -319,12 +333,12 @@ export default function Dashboard() {
                     </Popover>
                   </div>
 
-                  {/* Results Summary */}
+                  {/* Results Summary - Mobile Optimized */}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>
                       {sortedTransactions.length} of {transactions.length} transactions
                     </span>
-                    {(searchQuery || filterCategory !== 'all' || filterType !== 'all') && (
+                    {hasActiveFilters && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -333,7 +347,7 @@ export default function Dashboard() {
                           setFilterCategory('all')
                           setFilterType('all')
                         }}
-                        className="text-xs"
+                        className="text-xs h-7 px-2"
                       >
                         Clear filters
                       </Button>
@@ -355,19 +369,19 @@ export default function Dashboard() {
                   <Card className="p-3 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                     <div className="text-center">
                       <p className="text-xs text-green-700">Income</p>
-                      <p className="text-lg font-bold text-green-600">${totalIncome.toFixed(2)}</p>
+                      <p className="text-sm sm:text-lg font-bold text-green-600">${totalIncome.toFixed(2)}</p>
                     </div>
                   </Card>
                   <Card className="p-3 bg-gradient-to-br from-red-50 to-red-100 border-red-200">
                     <div className="text-center">
                       <p className="text-xs text-red-700">Expenses</p>
-                      <p className="text-lg font-bold text-red-600">${totalExpenses.toFixed(2)}</p>
+                      <p className="text-sm sm:text-lg font-bold text-red-600">${totalExpenses.toFixed(2)}</p>
                     </div>
                   </Card>
                   <Card className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                     <div className="text-center">
                       <p className="text-xs text-blue-700">Balance</p>
-                      <p className={`text-lg font-bold ${(totalIncome - totalExpenses) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <p className={`text-sm sm:text-lg font-bold ${(totalIncome - totalExpenses) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         ${(totalIncome - totalExpenses).toFixed(2)}
                       </p>
                     </div>
@@ -384,7 +398,9 @@ export default function Dashboard() {
                       Track your spending over time
                     </p>
                   </div>
-                  <ExpenseChart transactions={transactions} />
+                  <div className="w-full h-72 sm:h-80">
+                    <ExpenseChart transactions={transactions} />
+                  </div>
                 </Card>
               </div>
             </TabsContent>

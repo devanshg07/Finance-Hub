@@ -101,12 +101,12 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-          <Tag className="w-8 h-8 text-gray-400" />
+      <div className="text-center py-8 sm:py-12">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+          <Tag className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
         </div>
-        <div className="text-lg font-medium mb-2 text-gray-900">No transactions found</div>
-        <div className="text-sm text-gray-500 mb-4">
+        <div className="text-base sm:text-lg font-medium mb-2 text-gray-900">No transactions found</div>
+        <div className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
           {transactions.length === 0 ? "Add your first transaction to get started!" : "Try adjusting your search or filters."}
         </div>
         <Button variant="outline" size="sm">
@@ -117,15 +117,15 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {transactions.map((transaction) => (
         <Card key={transaction.id} className="hover:shadow-md transition-all duration-200 border-l-4" style={{
           borderLeftColor: generateCategoryColor(transaction.category)
         }}>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-1 sm:mb-2">
                   <Badge 
                     className="text-xs px-2 py-1 font-medium"
                     style={{
@@ -142,15 +142,15 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
                 </div>
                 
                 {transaction.description && (
-                  <p className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                  <p className="font-medium text-gray-900 text-xs sm:text-sm mb-1 line-clamp-2">
                     {transaction.description}
                   </p>
                 )}
               </div>
               
-              <div className="flex items-center gap-3 ml-4">
+              <div className="flex items-center gap-2 sm:gap-3 ml-2 sm:ml-4">
                 <div className="text-right">
-                  <span className={`font-bold text-lg ${
+                  <span className={`font-bold text-sm sm:text-lg ${
                     transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
                   }`}>
                     {formatAmount(transaction.amount)}
@@ -164,9 +164,9 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
                   variant="ghost"
                   size="sm"
                   onClick={() => onDeleteTransaction(transaction.id)}
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               </div>
             </div>

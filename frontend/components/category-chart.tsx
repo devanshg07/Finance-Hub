@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+import { useEffect, useState } from "react"
 
 interface Transaction {
   id: number
@@ -15,28 +15,30 @@ interface CategoryChartProps {
   transactions: Transaction[]
 }
 
-// Dynamic color generation based on category name hash
 const generateCategoryColor = (category: string) => {
-  // Create a hash from the category name
   let hash = 0
   for (let i = 0; i < category.length; i++) {
     const char = category.charCodeAt(i)
     hash = ((hash << 5) - hash) + char
-    hash = hash & hash // Convert to 32-bit integer
+    hash = hash & hash
   }
-  
-  // Use the hash to generate consistent colors
   const hue = Math.abs(hash) % 360
-  const saturation = 70 + (Math.abs(hash) % 20) // 70-90% saturation
-  const lightness = 45 + (Math.abs(hash) % 15) // 45-60% lightness for good contrast
-  
+  const saturation = 70 + (Math.abs(hash) % 20)
+  const lightness = 45 + (Math.abs(hash) % 15)
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`
 }
 
 export function CategoryChart({ transactions }: CategoryChartProps) {
-  // Filter out income transactions (positive amounts) - only show expenses
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 600)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   const expenseTransactions = transactions.filter(t => t.amount < 0)
-  
   const categoryData = expenseTransactions.reduce((acc, transaction) => {
     const category = transaction.category
     if (acc[category]) {
@@ -47,38 +49,58 @@ export function CategoryChart({ transactions }: CategoryChartProps) {
     return acc
   }, {} as Record<string, number>)
 
-  const data = Object.entries(categoryData).map(([name, value]) => ({
-    name,
-    value: value
-  }))
+  const data = Object.entries(categoryData).map(([name, value]) => ({ name, value }))
+
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <div className="text-center">
+          <div className="text-lg font-medium mb-2">No expenses yet</div>
+          <div className="text-sm">Add some expenses to see your spending breakdown</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Custom label: mobile shows only percentages for ALL segments, desktop shows name + percent for ALL segments
+  const renderLabel = ({ name, percent }: { name: string, percent: number }) => {
+    if (isMobile) {
+      // Show percentage for ALL segments on mobile
+      return `${(percent * 100).toFixed(0)}%`
+    } else {
+      // Desktop: show name + percent for ALL segments
+      return `${name} ${(percent * 100).toFixed(0)}%`
+    }
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Spending by Category</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={generateCategoryColor(entry.name)} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy={isMobile ? "38%" : "40%"}
+          labelLine={false}
+          label={renderLabel}
+          outerRadius={isMobile ? "50%" : "55%"}
+          fill="#8884d8"
+          dataKey="value"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={generateCategoryColor(entry.name)} />
+          ))}
+        </Pie>
+        <Tooltip 
+          formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+          labelFormatter={(label) => `Category: ${label}`}
+        />
+        <Legend 
+          layout="horizontal" 
+          verticalAlign="bottom" 
+          align="center"
+          wrapperStyle={{ fontSize: isMobile ? '10px' : '12px', paddingTop: isMobile ? '15px' : '10px' }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
   )
 } 
