@@ -69,51 +69,67 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
     loadUserCategories()
   }, [/* add key prop as dependency if present */])
 
+  const dedupeCategories = (categories: Category[]) => {
+    const seen = new Set<string>()
+    return categories.filter(cat => {
+      if (seen.has(cat.name)) return false;
+      seen.add(cat.name);
+      return true;
+    });
+  };
+
   const loadUserCategories = async () => {
     try {
-      // First try to get user-specific categories
       const user = JSON.parse(localStorage.getItem('user') || '{}')
-      
+      let userIncome: Category[] = []
+      let userExpense: Category[] = []
       if (user.id) {
-        const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
-        
+        const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
         if (response.ok) {
           const data = await response.json()
-          if (data.incomeCategories && data.expenseCategories) {
-            setUserCategories(data)
-            return
+          if (Array.isArray(data.incomeCategories) && data.incomeCategories.length > 0) {
+            userIncome = dedupeCategories(data.incomeCategories)
+          }
+          if (Array.isArray(data.expenseCategories) && data.expenseCategories.length > 0) {
+            userExpense = dedupeCategories(data.expenseCategories)
           }
         }
       }
-      
-      // Fallback to default categories
-      const defaultResponse = await fetch('http://localhost:5000/api/categories')
-      if (defaultResponse.ok) {
-        const defaultData = await defaultResponse.json()
-        setUserCategories({
-          incomeCategories: defaultData.incomeDescriptions.map((desc: string, index: number) => ({
-            id: `income-${index}`,
-            name: desc,
-            color: generateCategoryColor(desc)
-          })),
-          expenseCategories: defaultData.expenseDescriptions.map((desc: string, index: number) => ({
-            id: `expense-${index}`,
-            name: desc,
-            color: generateCategoryColor(desc)
-          }))
-        })
+      // Only use defaults if user categories are empty
+      if (userIncome.length === 0 || userExpense.length === 0) {
+        const defaultResponse = await fetch('https://finance-hub-hc1s.onrender.com/api/categories')
+        if (defaultResponse.ok) {
+          const defaultData = await defaultResponse.json()
+          if (userIncome.length === 0) {
+            userIncome = dedupeCategories(defaultData.incomeDescriptions.map((desc: string, index: number) => ({
+              id: `income-${index}`,
+              name: desc,
+              color: generateCategoryColor(desc)
+            })))
+          }
+          if (userExpense.length === 0) {
+            userExpense = dedupeCategories(defaultData.expenseDescriptions.map((desc: string, index: number) => ({
+              id: `expense-${index}`,
+              name: desc,
+              color: generateCategoryColor(desc)
+            })))
+          }
+        }
       }
+      setUserCategories({
+        incomeCategories: userIncome,
+        expenseCategories: userExpense,
+      })
     } catch (error) {
       console.error('Error loading categories:', error)
-      // Fallback to hardcoded categories if backend is not available
       setUserCategories({
-        incomeCategories: [
+        incomeCategories: dedupeCategories([
           { id: 'income-1', name: 'Salary', color: generateCategoryColor('Salary') },
           { id: 'income-2', name: 'Freelance', color: generateCategoryColor('Freelance') },
           { id: 'income-3', name: 'Investment', color: generateCategoryColor('Investment') },
           { id: 'income-4', name: 'Business Income', color: generateCategoryColor('Business Income') }
-        ],
-        expenseCategories: [
+        ]),
+        expenseCategories: dedupeCategories([
           { id: 'expense-1', name: 'Food & Dining', color: generateCategoryColor('Food & Dining') },
           { id: 'expense-2', name: 'Transportation', color: generateCategoryColor('Transportation') },
           { id: 'expense-3', name: 'Healthcare', color: generateCategoryColor('Healthcare') },
@@ -122,7 +138,7 @@ export function TransactionForm({ onAddTransaction, onCancel }: TransactionFormP
           { id: 'expense-6', name: 'Rent / Mortgage', color: generateCategoryColor('Rent / Mortgage') },
           { id: 'expense-7', name: 'Utilities', color: generateCategoryColor('Utilities') },
           { id: 'expense-8', name: 'Other', color: generateCategoryColor('Other') }
-        ]
+        ]),
       })
     }
   }

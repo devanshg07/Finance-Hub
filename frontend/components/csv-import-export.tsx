@@ -22,7 +22,7 @@ export function CSVImportExport({ onImportSuccess }: CSVImportExportProps) {
     formData.append('file', file)
 
     try {
-      const response = await fetch('http://localhost:5000/api/tasks/import', {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/tasks/import', {
         method: 'POST',
         body: formData,
       })
@@ -72,7 +72,7 @@ export function CSVImportExport({ onImportSuccess }: CSVImportExportProps) {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/tasks/export')
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/tasks/export')
       
       if (response.ok) {
         const blob = await response.blob()

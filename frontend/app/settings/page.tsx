@@ -70,7 +70,7 @@ export default function ManageCategories() {
         return
       }
 
-      const response = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+      const response = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
       if (response.ok) {
         const data = await response.json()
         const hasCategories = (data.incomeCategories && data.incomeCategories.length > 0) || 
@@ -82,13 +82,13 @@ export default function ManageCategories() {
         } else {
           // No categories found, create default ones
           console.log('No categories found for user, creating defaults...')
-          const createResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}/default`, {
+          const createResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
             method: 'POST'
           })
           
           if (createResponse.ok) {
             // Reload categories after creating defaults
-            const reloadResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+            const reloadResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
             if (reloadResponse.ok) {
               const reloadData = await reloadResponse.json()
               setIncomeCategories(reloadData.incomeCategories || [])
@@ -106,13 +106,13 @@ export default function ManageCategories() {
         }
       } else {
         // If no saved categories, try to create defaults
-        const createResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}/default`, {
+        const createResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}/default`, {
           method: 'POST'
         })
         
         if (createResponse.ok) {
           // Reload categories after creating defaults
-          const reloadResponse = await fetch(`http://localhost:5000/api/user-categories/${user.id}`)
+          const reloadResponse = await fetch(`https://finance-hub-hc1s.onrender.com/api/user-categories/${user.id}`)
           if (reloadResponse.ok) {
             const reloadData = await reloadResponse.json()
             setIncomeCategories(reloadData.incomeCategories || [])
@@ -136,9 +136,18 @@ export default function ManageCategories() {
     }
   }
 
-
+  // Helper: redirect to dashboard (or any page) after category change
+  const redirectAfterCategoryChange = (path = '/dashboard') => {
+    setTimeout(() => {
+      window.location.href = path;
+    }, 300); // short delay to ensure backend is updated
+  };
 
   const addIncomeCategory = async (name: string, color: string) => {
+    if (incomeCategories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
+      toast({ title: 'Duplicate Category', description: 'This income category already exists.', variant: 'destructive' });
+      return;
+    }
     const newCategory: Category = {
       id: Date.now().toString(),
       name,
@@ -146,12 +155,16 @@ export default function ManageCategories() {
     }
     const updatedCategories = [...incomeCategories, newCategory]
     setIncomeCategories(updatedCategories)
-    
-    // Auto-save
-    await saveCategoriesToBackend(updatedCategories, expenseCategories)
+    const success = await saveCategoriesToBackend(updatedCategories, expenseCategories)
+    if (!success) return;
+    redirectAfterCategoryChange();
   }
 
   const addExpenseCategory = async (name: string, color: string) => {
+    if (expenseCategories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
+      toast({ title: 'Duplicate Category', description: 'This expense category already exists.', variant: 'destructive' });
+      return;
+    }
     const newCategory: Category = {
       id: Date.now().toString(),
       name,
@@ -159,9 +172,9 @@ export default function ManageCategories() {
     }
     const updatedCategories = [...expenseCategories, newCategory]
     setExpenseCategories(updatedCategories)
-    
-    // Auto-save
-    await saveCategoriesToBackend(incomeCategories, updatedCategories)
+    const success = await saveCategoriesToBackend(incomeCategories, updatedCategories)
+    if (!success) return;
+    redirectAfterCategoryChange();
   }
 
   const removeIncomeCategory = async (id: string) => {
@@ -170,6 +183,7 @@ export default function ManageCategories() {
     
     // Auto-save
     await saveCategoriesToBackend(updatedCategories, expenseCategories)
+    redirectAfterCategoryChange();
   }
 
   const removeExpenseCategory = async (id: string) => {
@@ -178,6 +192,7 @@ export default function ManageCategories() {
     
     // Auto-save
     await saveCategoriesToBackend(incomeCategories, updatedCategories)
+    redirectAfterCategoryChange();
   }
 
   // Helper function to save categories to backend
@@ -185,15 +200,13 @@ export default function ManageCategories() {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       if (!user.id) {
-        return
+        return true;
       }
-
       const categoriesArray = [
         ...incomeCats.map(cat => ({ ...cat, type: 'income' })),
         ...expenseCats.map(cat => ({ ...cat, type: 'expense' }))
       ]
-
-      await fetch('https://finance-hub-hc1s.onrender.com/api/user-categories', {
+      const response = await fetch('https://finance-hub-hc1s.onrender.com/api/user-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,8 +216,23 @@ export default function ManageCategories() {
           categories: categoriesArray
         })
       })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        toast({
+          title: 'Error saving categories',
+          description: data.error || 'Unknown error',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      return true;
     } catch (error) {
-      console.error('Error auto-saving categories:', error)
+      toast({
+        title: 'Error saving categories',
+        description: error?.message || 'Unknown error',
+        variant: 'destructive',
+      });
+      return false;
     }
   }
 
