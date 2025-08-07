@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Trash2 } from "lucide-react"
+import { Trash2, Calendar, Tag } from "lucide-react"
 
 interface Transaction {
   id: number
@@ -101,9 +101,17 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <div className="text-lg font-medium mb-2">No transactions yet</div>
-        <div className="text-sm">Add your first transaction to get started!</div>
+      <div className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+          <Tag className="w-8 h-8 text-gray-400" />
+        </div>
+        <div className="text-lg font-medium mb-2 text-gray-900">No transactions found</div>
+        <div className="text-sm text-gray-500 mb-4">
+          {transactions.length === 0 ? "Add your first transaction to get started!" : "Try adjusting your search or filters."}
+        </div>
+        <Button variant="outline" size="sm">
+          Add Transaction
+        </Button>
       </div>
     )
   }
@@ -111,49 +119,59 @@ export function TransactionList({ transactions, onDeleteTransaction }: Transacti
   return (
     <div className="space-y-3">
       {transactions.map((transaction) => (
-        <div
-          key={transaction.id}
-          className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2">
-              <Badge 
-                className={`text-xs px-2 py-1`}
-                style={{
-                  backgroundColor: generateCategoryColor(transaction.category),
-                  color: '#ffffff'
-                }}
-              >
-                {transaction.category}
-              </Badge>
-              <span className="text-sm text-gray-500">
-                {formatDate(transaction.date)}
-              </span>
+        <Card key={transaction.id} className="hover:shadow-md transition-all duration-200 border-l-4" style={{
+          borderLeftColor: generateCategoryColor(transaction.category)
+        }}>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge 
+                    className="text-xs px-2 py-1 font-medium"
+                    style={{
+                      backgroundColor: generateCategoryColor(transaction.category),
+                      color: '#ffffff'
+                    }}
+                  >
+                    {transaction.category}
+                  </Badge>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    {formatDate(transaction.date)}
+                  </div>
+                </div>
+                
+                {transaction.description && (
+                  <p className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                    {transaction.description}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-3 ml-4">
+                <div className="text-right">
+                  <span className={`font-bold text-lg ${
+                    transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {formatAmount(transaction.amount)}
+                  </span>
+                  <div className="text-xs text-muted-foreground">
+                    {transaction.amount < 0 ? 'Expense' : 'Income'}
+                  </div>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDeleteTransaction(transaction.id)}
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-            {transaction.description && (
-              <p className="font-medium text-gray-900 text-sm truncate">
-                {transaction.description}
-              </p>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-3 ml-4">
-            <span className={`font-semibold text-sm ${
-              transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
-            }`}>
-              {formatAmount(transaction.amount)}
-            </span>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDeleteTransaction(transaction.id)}
-              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   )
